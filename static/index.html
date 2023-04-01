@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS & Material Icons -->
+  <link href="/public/css/bootstrap.css" rel="stylesheet">
+  <link href="/public/css/MaterialIcons.css" rel="stylesheet">
+  <style>
+    i.custom {
+      font-size: 1em;
+      color: #36454f;
+    }
+
+    i.warning {
+      font-size: 1em;
+      color: #FFA900;
+    }
+
+    i.row {
+      font-size: 1.1em;
+      color: #262626;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    i.small {
+      font-size: 1.1em;
+      --bs-gutter-x: 1.5rem;
+      margin-right: calc(-.5 * var(--bs-gutter-x));
+      margin-left: calc(-.5 * var(--bs-gutter-x));
+    }
+
+    i.navitem {
+      padding-top: 4px;
+      font-size: 1.8em;
+      color: whitesmoke;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .clickable {
+      cursor: pointer;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    th {
+      cursor: pointer;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  </style>
+
+  <link rel="icon" href="/public/favicon.ico">
+  <title id="title">Stella v0.1</title>
+</head>
+
+<body oncontextmenu="return false;" style="padding-bottom: 55px; background-color: whitesmoke">
+  <script src="/public/fabric.min.js"></script>
+  <script src="/public/bootstrap.bundle.min.js"></script>
+  <script src="/public/main.js"></script>
+  <script src="/public/draw.js"></script>
+
+  <!-- Header -->
+  <nav class="navbar sticky-top navbar-expand navbar-dark bg-dark">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarToggler">
+        <ul class="navbar-nav mb-2 mb-lg-0">
+          <li class="nav-item">
+            <span data-bs-toggle="modal" data-bs-target="#uploadFile">
+              <a class="btn btn-primary mx-1 px-0" href="#" role="button" title="Upload" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                <i class="material-icons">upload</i>
+              </a>
+            </span>
+          </li>
+          <li class="nav-item">
+            <button id="save_to_local" class="btn btn-light mx-1 px-0" onclick="saveToStorage(true)" title="Save Locally" data-bs-toggle="tooltip" data-bs-placement="bottom">
+              <i class="material-icons">save</i>
+            </button>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Map
+            </a>
+            <ul id="maps" class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            </ul>
+          </li>
+        </ul>
+
+        <div class="d-flex">
+          <button id="delete_storage" class="btn btn-light mx-1 px-0" onclick="deleteLocalStorage()"
+            title="Delete All" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">delete</i>
+          </button>
+          <button id="copy_to_clipboard" class="btn btn-light mx-1 px-0" onclick="copyMap()"
+            title="Copy to Clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">content_copy</i>
+          </button>
+
+          <button id="undo" class="btn btn-light mx-1 px-0 disabled" title="Undo" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">undo</i>
+          </button>
+          <button id="undo" class="btn btn-light mx-1 px-0 disabled" title="Redo" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">redo</i>
+          </button>
+
+          <a id="download" class="btn btn-primary mx-1 px-0" href="#" role="button" title="Download" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">download</i>
+          </a>
+        </div>
+        <div class="d-flex me-auto mx-1">
+          <span class="text-light fs-5" id="map_name"></span>
+        </div>
+        <div class="d-flex">
+          <button id="drawing-mode" class="btn btn-warning mx-1" title="Draw Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">draw</i>
+          </button>
+          <button id="shape-mode" class="btn btn-success mx-1" title="Shape Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">category</i>
+          </button>
+          <button id="text-mode" class="btn btn-success mx-1" title="Text Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">text_fields</i>
+          </button>
+          <button id="align-mode" class="btn btn-success mx-1" title="Align Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">center_focus_strong</i>
+          </button>
+          <button id="properties-mode" class="btn btn-success mx-1" title="Properties Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">list</i>
+          </button>
+          <button id="select_all" class="btn btn-light mx-1" title="Select All" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">select_all</i>
+          </button>
+          <button id="fit_canvas" class="btn btn-primary mx-1" title="Fit to Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">fit_screen</i>
+          </button> 
+          <button id="group" class="btn btn-primary mx-1" title="Group" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">group_work</i>
+          </button>
+          <button id="ungroup" class="btn btn-primary mx-1" title="Ungroup" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">workspaces</i>
+          </button>
+          <button id="to_front" class="btn btn-primary mx-1" title="To Front" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">flip_to_front</i>
+          </button>
+          <button id="to_back" class="btn btn-primary mx-1" title="To Back" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">flip_to_back</i>
+          </button>
+          <button id="rotate_left" class="btn btn-primary mx-1" title="Rotate Left" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">rotate_left</i>
+          </button>
+          <button id="rotate_right" class="btn btn-primary mx-1" title="Rotate Right" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">rotate_right</i>
+          </button>
+          <button id="delete" class="btn btn-danger mx-1" title="Delete" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">backspace</i>
+          </button>
+          <button id="clear-canvas" class="btn btn-danger mx-1" title="Clear Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">clear_all</i>
+          </button>
+        </div>
+        <div class="d-flex">
+          <span class="nav-item"><i class="material-icons navitem">search</i></span>
+          <input class="form-control me-2" maxlength="20" type="search" placeholder="Search" aria-label="Search" id="global_search"
+            onchange="searchKey('global_search')" onkeyup="searchKey('global_search')" onsearch="searchKey('global_search')">
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 100%; background-color: whitesmoke">
+    <div class="row">
+      <div id="canvas-div" class="col-auto px-0" style="background-color: black; overflow-x: auto; overflow-y: auto; max-width: 80%; max-height: 90vh;">
+        <canvas id="canvas" width="1024" height="768"/>
+      </div>
+      <div id="options" class="col p-1" style="background-color: whitesmoke">
+        <div id="drawing-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label for="drawing-mode-selector">Draw:</label>
+          <select id="drawing-mode-selector" title="Drawing Mode" data-bs-toggle="tooltip">
+            <option>Pencil</option>
+            <option>Circle</option>
+            <option>Spray</option>
+            <option>Pattern</option>
+            <option>hline</option>
+            <option>vline</option>
+            <option>square</option>
+            <option>diamond</option>
+            <option>texture</option>
+          </select><br>
+      
+          <label for="drawing-line-width">Line width:</label>
+          <span class="info">5</span><input type="range" value="5" min="0" max="150" id="drawing-line-width"><br>
+      
+          <label for="drawing-color">Line color:</label>
+          <input type="color" value="#005E7A" id="drawing-color"><br>
+      
+          <label for="drawing-shadow-color">Shadow color:</label>
+          <input type="color" value="#005E7A" id="drawing-shadow-color"><br>
+      
+          <label for="drawing-shadow-width">Shadow width:</label>
+          <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-width"><br>
+      
+          <label for="drawing-shadow-offset">Shadow offset:</label>
+          <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-offset"><br>
+        </div>
+
+        <div id="shape-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label>Shape:</label>
+          <button id="add-circle" class="btn btn-secondary mx-1" title="Circle" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">circle</i>
+          </button>
+          <button id="add-triangle" class="btn btn-secondary mx-1" title="Triangle" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">change_history</i>
+          </button>
+          <button id="add-rect" class="btn btn-secondary mx-1" title="Rectangle" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">rectangle</i>
+          </button>
+        </div>
+
+        <div id="text-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label style="vertical-align: top;">Text:</label>
+          <textarea id="text-caption" rows="2" cols="30" title="Text Caption" data-bs-toggle="tooltip"></textarea>
+          <button style="vertical-align: top;" id="add-text" class="btn btn-secondary mx-1" title="Add Text" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">text_fields</i>
+          </button>
+        </div>
+
+        <div id="align-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label>Align:</label>
+          <button id="center" class="btn btn-secondary mx-1" title="Center" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">center_focus_weak</i>
+          </button>
+          <button id="center_h" class="btn btn-secondary mx-1" title="Center Horiz" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">horizontal_distribute</i>
+          </button>
+          <button id="center_v" class="btn btn-secondary mx-1" title="Center Vert" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">vertical_distribute</i>
+          </button>
+          <button id="left_h" class="btn btn-secondary mx-1" title="Left Horiz" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">align_horizontal_left</i>
+          </button>
+          <button id="right_h" class="btn btn-secondary mx-1" title="Right Horiz" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">align_horizontal_right</i>
+          </button>
+          <button id="top_v" class="btn btn-secondary mx-1" title="Top Vert" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">vertical_align_top</i>
+          </button>
+          <button id="bottom_v" class="btn btn-secondary mx-1" title="Bottom Vert" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons row">vertical_align_bottom</i>
+          </button>
+        </div>
+
+        <div id="zoom-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label>Zoom:</label>
+          <input id="zoom-level" value="1" min="0.1" max="5" step="0.1" type="number" maxlength="5" title="Zoom Level" data-bs-toggle="tooltip">
+          <input id="zoom-level-range" value="1" min="0.1" max="5" step="0.1" type="range">
+        </div>
+
+        <div id="size-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label>Size:</label>
+          <input id="canvas-width" value="1024" maxlength="4" min="16" max="2048" type="number" title="Width" data-bs-toggle="tooltip">
+          <span class="text-light fs-5">X&nbsp;</span>
+          <input id="canvas-height" value="768" maxlength="4" min="16" max="2048" type="number" title="Height" data-bs-toggle="tooltip">
+        </div>
+
+        <div id="file-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
+          <label>File:</label>
+          <input id="file-name" value="stella_canvas" maxlength="20" type="text" title="File Name" data-bs-toggle="tooltip">
+          <select id="file-type" title="File Type" data-bs-toggle="tooltip">
+            <option value="json">JSON</option>
+            <option value="svg">SVG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <nav class="navbar fixed-bottom navbar-light bg-light py-0">
+    <div class="input-group">
+      <span class="input-group-text text-primary" id="message-prefix">Message</span>
+      <input type="text" class="form-control" id="message-text" aria-label="Message" readonly />
+      <span class="input-group-text text-muted" id="message-mode">Draw</span>
+    </div>
+  </nav>
+
+  <!-- Modal: Upload dialog -->
+  <div class="modal fade" id="uploadFile" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="uploadFileLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadFileLabel">Upload Map or Image</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="input-group mb-3">
+            <span class="input-group-text">Please choose a map or image to upload (max. size of 500KB)</span>
+          </div>
+          <div class="input-group mb-3">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="uploadRadioOptions" id="mapsRadio" value="maps" checked>
+              <label class="form-check-label" for="mapsRadio">File contains objects to be rendered</label>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input type="file" class="form-control" id="file" accept=".json,.svg,.png,.jpeg">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="uploadSelectedFile(document.querySelector('input[name = uploadRadioOptions]:checked').value)">Upload</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
