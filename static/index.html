@@ -69,7 +69,7 @@
   </style>
 
   <link rel="icon" href="/public/favicon.ico">
-  <title id="title">Stella v0.1</title>
+  <title id="title">Stella v0.2</title>
 </head>
 
 <body oncontextmenu="return false;" style="padding-bottom: 55px; background-color: whitesmoke">
@@ -77,6 +77,7 @@
   <script src="/public/bootstrap.bundle.min.js"></script>
   <script src="/public/main.js"></script>
   <script src="/public/draw.js"></script>
+  <script src="/public/edit.js"></script>
 
   <!-- Header -->
   <nav class="navbar sticky-top navbar-expand navbar-dark bg-dark">
@@ -116,14 +117,12 @@
             title="Copy to Clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">content_copy</i>
           </button>
-
           <button id="undo" class="btn btn-light mx-1 px-0 disabled" title="Undo" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">undo</i>
           </button>
-          <button id="undo" class="btn btn-light mx-1 px-0 disabled" title="Redo" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="redo" class="btn btn-light mx-1 px-0 disabled" title="Redo" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">redo</i>
           </button>
-
           <a id="download" class="btn btn-primary mx-1 px-0" href="#" role="button" title="Download" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">download</i>
           </a>
@@ -147,8 +146,14 @@
           <button id="properties-mode" class="btn btn-success mx-1" title="Properties Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">list</i>
           </button>
-          <button id="select_all" class="btn btn-light mx-1" title="Select All" data-bs-toggle="tooltip" data-bs-placement="bottom">
-            <i class="material-icons row">select_all</i>
+          <button id="select_all" class="btn btn-light mx-1 px-0" title="Select All" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">select_all</i>
+          </button>
+          <button id="zoom_in" class="btn btn-light mx-1 px-0" title="Zoom In" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">zoom_in</i>
+          </button>
+          <button id="zoom_out" class="btn btn-light mx-1 px-0" title="Zoom Out" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">zoom_out</i>
           </button>
           <button id="fit_canvas" class="btn btn-primary mx-1" title="Fit to Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">fit_screen</i>
@@ -187,14 +192,14 @@
     </div>
   </nav>
 
-  <div class="container" style="max-width: 100%; background-color: whitesmoke">
+  <div class="container float-left" style="max-width: 100%; background-color: whitesmoke">
     <div class="row">
-      <div id="canvas-div" class="col-auto px-0" style="background-color: black; overflow-x: auto; overflow-y: auto; max-width: 80%; max-height: 90vh;">
-        <canvas id="canvas" width="1024" height="768"/>
+      <div id="canvas-div" class="col-auto px-0" style="background-color: black; overflow: auto;">
+        <canvas class="border border-secondary" id="canvas" />
       </div>
-      <div id="options" class="col p-1" style="background-color: whitesmoke">
+      <div id="options" class="col-auto p-1" style="overflow: auto;">
         <div id="drawing-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
-          <label for="drawing-mode-selector">Draw:</label>
+          <label for="drawing-mode-selector" style="width: 150px; float: left;">Draw Tool:</label>
           <select id="drawing-mode-selector" title="Drawing Mode" data-bs-toggle="tooltip">
             <option>Pencil</option>
             <option>Circle</option>
@@ -207,20 +212,20 @@
             <option>texture</option>
           </select><br>
       
-          <label for="drawing-line-width">Line width:</label>
-          <span class="info">5</span><input type="range" value="5" min="0" max="150" id="drawing-line-width"><br>
+          <label for="drawing-line-width" style="width: 150px; float: left;">Line Width:</label>
+          <span class="info">5</span><input style="margin-left: 5px;" type="range" value="5" min="0" max="150" id="drawing-line-width"><br>
       
-          <label for="drawing-color">Line color:</label>
+          <label for="drawing-color" style="width: 150px; float: left;">Line Color:</label>
           <input type="color" value="#005E7A" id="drawing-color"><br>
       
-          <label for="drawing-shadow-color">Shadow color:</label>
+          <label for="drawing-shadow-color" style="width: 150px; float: left;">Shadow Color:</label>
           <input type="color" value="#005E7A" id="drawing-shadow-color"><br>
       
-          <label for="drawing-shadow-width">Shadow width:</label>
-          <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-width"><br>
+          <label for="drawing-shadow-width" style="width: 150px; float: left;">Shadow Width:</label>
+          <span class="info">0</span><input style="margin-left: 5px;" type="range" value="0" min="0" max="50" id="drawing-shadow-width"><br>
       
-          <label for="drawing-shadow-offset">Shadow offset:</label>
-          <span class="info">0</span><input type="range" value="0" min="0" max="50" id="drawing-shadow-offset"><br>
+          <label for="drawing-shadow-offset" style="width: 150px; float: left;">Shadow Offset:</label>
+          <span class="info">0</span><input style="margin-left: 5px;" type="range" value="0" min="0" max="50" id="drawing-shadow-offset"><br>
         </div>
 
         <div id="shape-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
@@ -291,6 +296,9 @@
             <option value="jpeg">JPEG</option>
             <option value="png">PNG</option>
           </select>
+        </div>
+
+        <div id="object-props" style="background-color: lightgrey; padding: 4px; display: none;">
         </div>
       </div>
     </div>

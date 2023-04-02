@@ -4,6 +4,8 @@ const JSON_HEADERS = {
 };
 
 const MY_MAP = "MY MAP";
+const DEFAULT_WIDTH = 1024;
+const DEFAULT_HEIGHT = 768;
 const NOW = new Date();
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Toronto";
 const EMPTY_MAP = {
@@ -18,6 +20,8 @@ var _mapName = null;
 var _sortOrders = {};
 var _sortKey = "";
 var _mapNameParam = null;
+var _modeParam = "view";
+var _mode = _modeParam;
 var _filterKeyParam = null;
 var _filterKey = _filterKeyParam;
 var _map = EMPTY_MAP;
@@ -36,7 +40,11 @@ window.onload = function () {
   if (url.searchParams.has("map")) {
     _mapNameParam = url.searchParams.get("map");
     _mapName = _mapNameParam;
-  }  
+  }
+  if (url.searchParams.has("mode")) {
+    _modeParam = url.searchParams.get("mode");
+    _mode = _modeParam;
+  }
   if (url.searchParams.has("filter")) {
     _filterKeyParam = url.searchParams.get("filter");
     setFilterKey(_filterKeyParam);
@@ -49,12 +57,12 @@ window.onload = function () {
   }
 
   let canvasData = null;
-  let canvasSize = { width: 1024, height: 768 };
+  let canvasSize = null;
   if (_state) {
     canvasData = _state.canvasData;
     canvasSize = _state.canvasSize ?? canvasSize;
   }
-  _canvas = _initDraw(canvasSize.width, canvasSize.height, canvasData);
+  initCanvas(canvasData, canvasSize);
   refreshMap();
 
   if (!_mapName) {
@@ -79,9 +87,10 @@ const saveToStorage = (force=false) => {
     _state = {};
     _state._maps = _maps;
     _state._mapName = _mapName;
+    _state._mode = _mode;
     if (_canvas) {
       _state.canvasData = _canvas.toJSON();
-      _state.canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };  
+      _state.canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
     }
     _state.lastModified = new Date();
     localStorage.setItem("katzemeo.stella", JSON.stringify(_state));
@@ -100,6 +109,7 @@ const restoreFromStorage = () => {
         _state = JSON.parse(_state);
         _maps = _state._maps ?? {};
         _mapName = _mapNameParam ?? _state._mapName;
+        _mode = _modeParam ?? _state._mode;
         writeMessage("Restored from local storage (Updated: "+ formatTime(_state.lastModified) +")");
         return true;
       } catch (error) {
@@ -155,6 +165,20 @@ function appendItem(parentEl, innerHTML, className = null) {
     li.className = className;
   }
   parentEl.appendChild(li);
+}
+
+function initCanvas(canvasData, canvasSize=null) {
+  if (_canvas) {
+    _canvas.dispose();
+    if (!canvasSize) {
+      canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
+    }
+  }
+  if (!canvasSize) {
+    canvasSize = { width: _mode !== "edit" ? window.innerWidth : DEFAULT_WIDTH,
+      height: _mode !== "edit" ? window.innerHeight : DEFAULT_HEIGHT };
+  }
+  _canvas = _initDraw(canvasSize.width, canvasSize.height, canvasData);
 }
 
 function refreshMap(map = _map) {
@@ -270,10 +294,11 @@ function searchKey(key) {
 }
 
 function processMap(data) {
-  let map = _maps[data.name];
-  // TODO
+  const map = _maps[data.name];
+  const canvasData = data.canvasData;
+  initCanvas(canvasData);
   refreshMap(map);
-    
+
   return map;
 }
 

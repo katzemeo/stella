@@ -1,17 +1,18 @@
 
 function _initDraw(width, height, json=null) {
   var $ = function(id){return document.getElementById(id)};
+  var show = function(el,v) { el.style.display = v ? "" : "none"; }
 
-  /*
-  const originalToObject = fabric.Object.prototype.toObject;
+  const originalToImage = fabric.Image.prototype.toObject;
   const myAdditional = ['url'];
-  fabric.Object.prototype.toObject = function (additionalProperties) {
-      return originalToObject.call(this, myAdditional.concat(additionalProperties));
+  fabric.Image.prototype.toObject = function (additionalProperties) {
+      return originalToImage.call(this, myAdditional.concat(additionalProperties));
   }
-  */
 
   fabric.Object.prototype.transparentCorners = false;
   const canvasDivEl = $('canvas-div'),
+    undoEl = $('undo'),
+    redoEl = $('redo'),
     optionsEl = $('options'),
     drawingModeEl = $('drawing-mode'),
     drawingOptionsEl = $('drawing-mode-options'),
@@ -27,10 +28,21 @@ function _initDraw(width, height, json=null) {
     alignModeEl = $('align-mode'),
     alignOptionsEl = $('align-mode-options'),
     propertiesModeEl = $('properties-mode'),
+    selectAllEl = $("select_all"),
+    objectPropsEl = $('object-props'),
     zoomLevelEl = $('zoom-level'),
     zoomLevelRangeEl = $('zoom-level-range'),
     textCaptionEl = $('text-caption'),
+    groupEl = $("group"),
+    ungroupEl = $("ungroup"),
+    toFrontEl = $("to_front"),
+    toBackEl = $("to_back"),
+    rotateLeftEl = $("rotate_left"),
+    rotateRightEl = $("rotate_right"),  
+    deleteEl = $("delete"),
     clearEl = $('clear-canvas');
+  const uiElements = [ undoEl, redoEl, drawingModeEl, shapeModeEl, textModeEl, alignModeEl, propertiesModeEl, selectAllEl,
+    groupEl, ungroupEl, toFrontEl, toBackEl, rotateLeftEl, rotateRightEl, deleteEl, clearEl ];
 
   function setCanvasWidth(width, render=false) {
     $('canvas').width = width;
@@ -70,8 +82,21 @@ function _initDraw(width, height, json=null) {
     this.download = filename;
   }
 
+  fabric.Object.prototype.selectable =  _mode === "edit";
+  fabric.Image.prototype.hoverCursor = "pointer";
+  //fabric.Object.prototype.lockMovementX =  _mode === "edit";
+  //fabric.Object.prototype.lockMovementY =  _mode === "edit";
+  updatePropertiesMode();
+  uiElements.forEach((el) => {
+    show(el, _mode === "edit");
+  });
+
   var canvas = new fabric.Canvas('canvas', {
     isDrawingMode: false,
+    selection: _mode === "edit",
+    defaultCursor: 'default',
+    hoverCursor: _mode === "edit" ? 'grab' : 'default',
+    moveCursor: _mode === "edit" ? 'grabbing' : 'default',
     backgroundColor: null
   });
 
@@ -93,17 +118,23 @@ function _initDraw(width, height, json=null) {
 
   // Pan support
   canvas.on('mouse:down', function(opt) {
-    var evt = opt.e;
-    if (evt.altKey === true) {
+    const e = opt.e;
+    if (e.altKey || _mode !== "edit") {
+      this.defaultCursor = 'grab';
       this.isDragging = true;
       this.selection = false;
-      this.lastPosX = evt.clientX;
-      this.lastPosY = evt.clientY;
+      this.lastPosX = e.clientX;
+      this.lastPosY = e.clientY;
     }
   });
   canvas.on('mouse:move', function(opt) {
     if (this.isDragging) {
-      var e = opt.e;
+      const e = opt.e;
+      /*
+      if (e.altKey) {
+        this.defaultCursor = 'grabbing';
+      }
+      */
       var vpt = this.viewportTransform;
       vpt[4] += e.clientX - this.lastPosX;
       vpt[5] += e.clientY - this.lastPosY;
@@ -116,8 +147,9 @@ function _initDraw(width, height, json=null) {
     // on mouse up we want to recalculate new interaction
     // for all objects, so we call setViewportTransform
     this.setViewportTransform(this.viewportTransform);
+    this.defaultCursor = 'default';
     this.isDragging = false;
-    this.selection = true;
+    this.selection = _mode === "edit";
   });
   
   // Zoom support
@@ -157,9 +189,23 @@ function _initDraw(width, height, json=null) {
     updateZoomValues();
   };
 
+  $("zoom_in").onclick = function() {
+    canvas.setZoom(fixZoom(canvas.getZoom() + 0.1));
+    updateZoomValues();
+  };
+
+  $("zoom_out").onclick = function() {
+    canvas.setZoom(fixZoom(canvas.getZoom() - 0.1));
+    updateZoomValues();
+  };
+
   function handleSelection(e) {
+    removeChildren(objectPropsEl);
     if (e.selected && e.selected.length === 1) {
-      console.log(e.selected[0]);
+      createObjectControls(objectPropsEl, e.selected[0]);
+      show(objectPropsEl, true);
+    } else {
+      show(objectPropsEl, false);
     }
   }
   canvas.on('selection:created', function(e) {
@@ -174,9 +220,8 @@ function _initDraw(width, height, json=null) {
 
   $("add-circle").onclick = function() {
     var circle = new fabric.Circle({
-      radius: 20, fill: 'green', left: 100, top: 100, padding: 0
+      radius: 20, fill: '#00ff00', left: 100, top: 100, padding: 0
     });
-    //circle.set({url: "https://domain.tld"});
     canvas.add(circle);
   };
 
@@ -210,13 +255,13 @@ function _initDraw(width, height, json=null) {
     return sel;
   }
 
-  const selectAllEl = $("select_all");
   selectAllEl.onclick = function() {
-    selectAll();
-    canvas.requestRenderAll();
+    if (_mode === "edit") {
+      selectAll();
+      canvas.requestRenderAll();  
+    }
   };
 
-  const groupEl = $("group");
   groupEl.onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
@@ -229,7 +274,6 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const ungroupEl = $("ungroup");
   ungroupEl.onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
@@ -242,7 +286,6 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const toFrontEl = $("to_front");
   toFrontEl.onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
@@ -252,7 +295,6 @@ function _initDraw(width, height, json=null) {
     canvas.discardActiveObject();
   };
 
-  const toBackEl = $("to_back");
   toBackEl.onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
@@ -273,10 +315,11 @@ function _initDraw(width, height, json=null) {
     canvas.renderAll();
   }
 
-  $("rotate_left").onclick = function() {
+  rotateLeftEl.onclick = function() {
     rotateObject(-90);
   };
-  $("rotate_right").onclick = function() {
+
+  rotateRightEl.onclick = function() {
     rotateObject(90);
   };
 
@@ -339,8 +382,7 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const rightHEl = $("right_h");
-  rightHEl.onclick = function() {
+  $("right_h").onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
       return;
@@ -349,8 +391,7 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const topVEl = $("top_v");
-  topVEl.onclick = function() {
+  $("top_v").onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
       return;
@@ -359,8 +400,7 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const bottomVHEl = $("bottom_v");
-  bottomVHEl.onclick = function() {
+  $("bottom_v").onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
       return;
@@ -369,7 +409,6 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  const deleteEl = $("delete");
   deleteEl.onclick = function() {
     const activeObj = canvas.getActiveObject();
     if (!activeObj) {
@@ -385,35 +424,41 @@ function _initDraw(width, height, json=null) {
     }
   };
 
-  clearEl.onclick = function() { canvas.clear() };
+  clearEl.onclick = function() {
+    if (_mode === "edit") {
+      canvas.clear();
+    }
+  };
 
   function updateDrawingMode() {
     if (canvas.isDrawingMode) {
       drawingModeEl.classList.remove("btn-warning");
       drawingModeEl.classList.add("btn-success");
-      drawingOptionsEl.style.display = '';
+      show(drawingOptionsEl, true);
       writeMode("Draw");
     } else {
       drawingModeEl.classList.remove("btn-success");
       drawingModeEl.classList.add("btn-warning");
-      drawingOptionsEl.style.display = 'none';
+      show(drawingOptionsEl, false);
       writeMode("Select");
     }
   }
   drawingModeEl.onclick = function() {
-    canvas.isDrawingMode = !canvas.isDrawingMode;
-    updateDrawingMode();
+    if (_mode === "edit") {
+      canvas.isDrawingMode = !canvas.isDrawingMode;
+      updateDrawingMode();  
+    }
   };
 
   shapeModeEl.onclick = function() {
     if (!shapeOptionsEl.style.display) {
       shapeModeEl.classList.remove("btn-success");
       shapeModeEl.classList.add("btn-warning");
-      shapeOptionsEl.style.display = 'none';
+      show(shapeOptionsEl, false);
     } else {
       shapeModeEl.classList.remove("btn-warning");
       shapeModeEl.classList.add("btn-success");
-      shapeOptionsEl.style.display = '';
+      show(shapeOptionsEl, true);
     }
   };
 
@@ -421,11 +466,11 @@ function _initDraw(width, height, json=null) {
     if (!textOptionsEl.style.display) {
       textModeEl.classList.remove("btn-success");
       textModeEl.classList.add("btn-warning");
-      textOptionsEl.style.display = 'none';
+      show(textOptionsEl, false);
     } else {
       textModeEl.classList.remove("btn-warning");
       textModeEl.classList.add("btn-success");
-      textOptionsEl.style.display = '';
+      show(textOptionsEl, true);
     }
   };
 
@@ -433,26 +478,29 @@ function _initDraw(width, height, json=null) {
     if (!alignOptionsEl.style.display) {
       alignModeEl.classList.remove("btn-success");
       alignModeEl.classList.add("btn-warning");
-      alignOptionsEl.style.display = 'none';
+      show(alignOptionsEl, false);
     } else {
       alignModeEl.classList.remove("btn-warning");
       alignModeEl.classList.add("btn-success");
-      alignOptionsEl.style.display = '';
+      show(alignOptionsEl, true);
     }
   };
 
-  propertiesModeEl.onclick = function() {
-    if (!optionsEl.style.display) {
-      propertiesModeEl.classList.remove("btn-success");
-      propertiesModeEl.classList.add("btn-warning");
-      optionsEl.style.display = 'none';
-      canvasDivEl.style.maxWidth = "100%";
-    } else {
+  function updatePropertiesMode(toggle=false) {
+    if (_mode === "edit" && (!toggle || optionsEl.style.display)) {
       propertiesModeEl.classList.remove("btn-warning");
       propertiesModeEl.classList.add("btn-success");
-      optionsEl.style.display = '';
+      show(optionsEl, true);
       canvasDivEl.style.maxWidth = "80%";
+    } else {
+      propertiesModeEl.classList.remove("btn-success");
+      propertiesModeEl.classList.add("btn-warning");
+      show(optionsEl, false);
+      canvasDivEl.style.maxWidth = "100%";
     }
+  }
+  propertiesModeEl.onclick = function() {
+    updatePropertiesMode(true);
   };
 
   if (fabric.PatternBrush) {

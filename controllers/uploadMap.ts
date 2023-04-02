@@ -6,8 +6,11 @@ const ERR_UPLOAD_JSON_EXPECTED = "Invalid file type, JSON file expected.";
 
 async function parseMapFile(uploadFilename: string, text: string) {
   try {
-    const result = JSON.parse(text);
+    const result : any = {};
     console.debug(`Validating uploaded JSON file ${uploadFilename}...`);
+    result.canvasData = JSON.parse(text);
+    result.name = uploadFilename;
+    result.date = new Date();
     return result;
   } catch (e) {
     console.error(e);
