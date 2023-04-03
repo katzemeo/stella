@@ -240,3 +240,91 @@ function createSelect(name, meta, value, onChange) {
   el.setAttribute("onchange", onChange);
   return el;
 }
+
+var _ctrl = false;
+var _clipboard = null;
+function initKeyboard() {
+  let cKey = keyboard("c"), vKey = keyboard("v"), ctrl = keyboard("Control");
+  ctrl.press = () => { _ctrl = true; };
+  ctrl.release = () => { _ctrl = false; };
+  cKey.press = () => { if (_ctrl && _canvas && _canvas.getActiveObject()) {
+    _canvas.getActiveObject().clone(function(cloned) { _clipboard = cloned; });
+  } };
+  vKey.press = pasteCloned;
+
+  cKey.subscribe();
+  vKey.subscribe();
+  ctrl.subscribe();
+}
+
+function pasteCloned() {
+  if (_ctrl && _clipboard && _canvas) {
+    _clipboard.clone(function(clonedObj) {
+      _canvas.discardActiveObject();
+      clonedObj.set({
+        left: clonedObj.left + 20,
+        top: clonedObj.top + 20,
+        evented: true,
+      });
+      if (clonedObj.type === 'activeSelection') {
+        clonedObj.canvas = _canvas;
+        clonedObj.forEachObject(function(obj) {
+          _canvas.add(obj);
+        });
+        clonedObj.setCoords();
+      } else {
+        _canvas.add(clonedObj);
+      }
+      _clipboard.top += 20;
+      _clipboard.left += 20;
+      _canvas.setActiveObject(clonedObj);
+      _canvas.requestRenderAll();
+    });
+  }
+}
+
+function keyboard(value) {
+  let key = {};
+  key.value = value;
+  key.isDown = false;
+  key.isUp = true;
+  key.press = undefined;
+  key.release = undefined;
+
+  key.downHandler = event => {
+    if (event.key === key.value) {
+      if (key.isUp && key.press) key.press();
+      key.isDown = true;
+      key.isUp = false;
+      event.preventDefault();
+    }
+  };
+
+  key.upHandler = event => {
+    if (event.key === key.value) {
+      if (key.isDown && key.release) key.release();
+      key.isDown = false;
+      key.isUp = true;
+      event.preventDefault();
+    }
+  };
+
+  const downListener = key.downHandler.bind(key);
+  const upListener = key.upHandler.bind(key);
+
+  key.subscribe = () => {
+    window.addEventListener(
+      "keydown", downListener, false
+    );
+    window.addEventListener(
+      "keyup", upListener, false
+    );
+  }
+
+  key.unsubscribe = () => {
+    window.removeEventListener("keydown", downListener);
+    window.removeEventListener("keyup", upListener);
+  };
+
+  return key;
+}    

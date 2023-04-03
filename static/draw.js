@@ -261,6 +261,23 @@ function _initDraw(width, height, json=null) {
     canvas.add(rect);
   };
 
+  $("add-diamond").onclick = function() {
+    var rect = new fabric.Rect({
+      left: 200,
+      top: 50,
+      fill: '#F06292',
+      width: 100,
+      height: 100,
+      strokeWidth: 2,
+      stroke: "#880E4F",
+      rx: 10,
+      ry: 10,
+      angle: 45,
+      hasControls: true
+    });
+    canvas.add(rect);
+  };
+
   $("add-text").onclick = function() {
     let caption = textCaptionEl.value.trim();
     var text = new fabric.Text(caption !== "" ? caption : "Stella", {

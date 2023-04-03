@@ -65,6 +65,7 @@ window.onload = function () {
 
   configureAutomaticSave();
   updateTooltips();
+  initKeyboard();
 };
 
 function updateTooltips() {
