@@ -150,8 +150,31 @@ function _initDraw(width, height, json=null) {
     this.defaultCursor = 'default';
     this.isDragging = false;
     this.selection = _mode === "edit";
+
+    if (targetURL &&  _mode !== "edit") {
+      window.open(targetURL, "stella_link");
+      targetURL = null;
+    }
   });
-  
+
+  let targetURL = null;
+  canvas.on('mouse:over', function(opt) {
+    if (opt.target) {
+      const obj = opt.target;
+      if (!targetURL && obj.url) {
+        targetURL = obj.url;
+        writeMessage(targetURL);
+      }
+    }
+  });
+
+  canvas.on('mouse:out', function(opt) {
+    if (targetURL) {
+      targetURL = null;
+      writeMessage("");
+    }
+  });
+
   // Zoom support
   function fixZoom(zoom) {
     zoom = Number(zoom.toFixed(2));

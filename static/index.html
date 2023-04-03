@@ -131,22 +131,22 @@
           <span class="text-light fs-5" id="map_name"></span>
         </div>
         <div class="d-flex">
-          <button id="drawing-mode" class="btn btn-warning mx-1" title="Draw Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="drawing-mode" class="btn btn-warning mx-1" style="display: none;" title="Draw Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">draw</i>
           </button>
-          <button id="shape-mode" class="btn btn-success mx-1" title="Shape Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="shape-mode" class="btn btn-success mx-1" style="display: none;" title="Shape Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">category</i>
           </button>
-          <button id="text-mode" class="btn btn-success mx-1" title="Text Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="text-mode" class="btn btn-success mx-1" style="display: none;" title="Text Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">text_fields</i>
           </button>
-          <button id="align-mode" class="btn btn-success mx-1" title="Align Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="align-mode" class="btn btn-success mx-1" style="display: none;" title="Align Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">center_focus_strong</i>
           </button>
-          <button id="properties-mode" class="btn btn-success mx-1" title="Properties Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="properties-mode" class="btn btn-success mx-1" style="display: none;" title="Properties Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">list</i>
           </button>
-          <button id="select_all" class="btn btn-light mx-1 px-0" title="Select All" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="select_all" class="btn btn-light mx-1 px-0" style="display: none;" title="Select All" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">select_all</i>
           </button>
           <button id="zoom_in" class="btn btn-light mx-1 px-0" title="Zoom In" data-bs-toggle="tooltip" data-bs-placement="bottom">
@@ -158,28 +158,28 @@
           <button id="fit_canvas" class="btn btn-primary mx-1" title="Fit to Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">fit_screen</i>
           </button> 
-          <button id="group" class="btn btn-primary mx-1" title="Group" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="group" class="btn btn-primary mx-1" style="display: none;" title="Group" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">group_work</i>
           </button>
-          <button id="ungroup" class="btn btn-primary mx-1" title="Ungroup" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="ungroup" class="btn btn-primary mx-1" style="display: none;" title="Ungroup" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">workspaces</i>
           </button>
-          <button id="to_front" class="btn btn-primary mx-1" title="To Front" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="to_front" class="btn btn-primary mx-1" style="display: none;" title="To Front" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">flip_to_front</i>
           </button>
-          <button id="to_back" class="btn btn-primary mx-1" title="To Back" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="to_back" class="btn btn-primary mx-1" style="display: none;" title="To Back" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">flip_to_back</i>
           </button>
-          <button id="rotate_left" class="btn btn-primary mx-1" title="Rotate Left" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="rotate_left" class="btn btn-primary mx-1" style="display: none;" title="Rotate Left" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">rotate_left</i>
           </button>
-          <button id="rotate_right" class="btn btn-primary mx-1" title="Rotate Right" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="rotate_right" class="btn btn-primary mx-1" style="display: none;" title="Rotate Right" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">rotate_right</i>
           </button>
-          <button id="delete" class="btn btn-danger mx-1" title="Delete" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="delete" class="btn btn-danger mx-1" style="display: none;" title="Delete" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">backspace</i>
           </button>
-          <button id="clear-canvas" class="btn btn-danger mx-1" title="Clear Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="clear-canvas" class="btn btn-danger mx-1" style="display: none;" title="Clear Canvas" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons row">clear_all</i>
           </button>
         </div>
@@ -197,7 +197,7 @@
       <div id="canvas-div" class="col-auto px-0" style="background-color: black; overflow: auto;">
         <canvas class="border border-secondary" id="canvas" />
       </div>
-      <div id="options" class="col-auto p-1" style="overflow: auto;">
+      <div id="options" class="col-auto p-1" style="overflow: auto; display: none;">
         <div id="drawing-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
           <label for="drawing-mode-selector" style="width: 150px; float: left;">Draw Tool:</label>
           <select id="drawing-mode-selector" title="Drawing Mode" data-bs-toggle="tooltip">
@@ -298,8 +298,7 @@
           </select>
         </div>
 
-        <div id="object-props" style="background-color: lightgrey; padding: 4px; display: none;">
-        </div>
+        <div id="object-props" style="background-color: lightgrey; padding: 4px; display: none;" />
       </div>
     </div>
   </div>

@@ -4,8 +4,8 @@ const JSON_HEADERS = {
 };
 
 const MY_MAP = "MY MAP";
-const DEFAULT_WIDTH = 1024;
-const DEFAULT_HEIGHT = 768;
+const DEFAULT_WIDTH = 1200;
+const DEFAULT_HEIGHT = 800;
 const NOW = new Date();
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Toronto";
 const EMPTY_MAP = {
@@ -28,6 +28,7 @@ var _map = EMPTY_MAP;
 var _refresh = true;
 var _userInfo = null;
 var _canvas = null;
+var _canvasSize = null;
 
 function clearState() {
   _maps = {};
@@ -56,13 +57,6 @@ window.onload = function () {
     }
   }
 
-  let canvasData = null;
-  let canvasSize = null;
-  if (_state) {
-    canvasData = _state.canvasData;
-    canvasSize = _state.canvasSize ?? canvasSize;
-  }
-  initCanvas(canvasData, canvasSize);
   refreshMap();
 
   if (!_mapName) {
@@ -89,7 +83,7 @@ const saveToStorage = (force=false) => {
     _state._mapName = _mapName;
     _state._mode = _mode;
     if (_canvas) {
-      _state.canvasData = _canvas.toJSON();
+      _map.canvasData = _canvas.toJSON();
       _state.canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
     }
     _state.lastModified = new Date();
@@ -110,6 +104,7 @@ const restoreFromStorage = () => {
         _maps = _state._maps ?? {};
         _mapName = _mapNameParam ?? _state._mapName;
         _mode = _modeParam ?? _state._mode;
+        _canvasSize = _state.canvasSize;
         writeMessage("Restored from local storage (Updated: "+ formatTime(_state.lastModified) +")");
         return true;
       } catch (error) {
@@ -182,26 +177,27 @@ function initCanvas(canvasData, canvasSize=null) {
 }
 
 function refreshMap(map = _map) {
-  // Build maps picker based
+  // Build maps picker
   let el = document.getElementById("maps");
   removeChildren(el);
 
   const numMaps = Object.keys(_maps).length;
-  if (numMaps > 1) {
+  if (numMaps > 0) {
     createMapMI(el, MY_MAP, MY_MAP, false);
   } else if (numMaps < 1) {
     appendItem(el, `<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#uploadFile">Upload Map File...</a>`);
   }
 
   for (const key in _maps) {
-    let t = _maps[key];
-    createMapMI(el, t.name, t.squad);
+    let m = _maps[key];
+    if (m.name !== MY_MAP) {
+      createMapMI(el, m.name);
+    }
   };
 
   setMap(map);
 }
 
-//<li><a class="dropdown-item" href="#">Map</a></li>
 function createMapMI(el, name, removeOption = true) {
   let li = document.createElement("li");
   let a = document.createElement("a");
@@ -219,9 +215,15 @@ function createRemoveMap(name) {
 function showMyMap() {
   var map = {
     name: MY_MAP,
-    maps: [],
-    capacity: 0,
   };
+
+  if (!_maps[map.name]) {
+    _mapName = map.name;
+    _maps[map.name] = map;
+    _modified = true;
+  } else {
+    map = _maps[map.name];
+  }
 
   setMap(map);
 }
@@ -277,6 +279,7 @@ function setMap(map) {
 
   _date = _map.date ? new Date(_map.date) : new Date(NOW);
   enableDisableNavigation();
+  initCanvas(map.canvasData, _canvas ? null : _canvasSize);
 
   el = document.getElementById("map_name");
   el.innerHTML = _map.name;
@@ -294,9 +297,23 @@ function searchKey(key) {
 }
 
 function processMap(data) {
-  const map = _maps[data.name];
-  const canvasData = data.canvasData;
-  initCanvas(canvasData);
+  let map = _maps[data.name];
+  if (!map) {
+    map = {
+      name: data.name
+    };
+  }
+
+  map.name = map.name ?? MY_MAP;
+  map.canvasData = data.canvasData ?? map.canvasData;
+  initCanvas(map.canvasData);
+
+  if (!_maps[map.name]) {
+    _mapName = map.name;
+    _maps[map.name] = map;
+    _modified = true;
+  }
+
   refreshMap(map);
 
   return map;
