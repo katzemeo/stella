@@ -13,6 +13,7 @@ function _initDraw(width, height, map) {
 
   fabric.Object.prototype.transparentCorners = false;
   const canvasDivEl = $('canvas-div'),
+    editModeEl = $('edit-mode'),
     undoEl = $('undo'),
     redoEl = $('redo'),
     optionsEl = $('options'),
@@ -92,6 +93,7 @@ function _initDraw(width, height, map) {
   fabric.Object.prototype.selectable =  _mode === "edit";
   fabric.Image.prototype.hoverCursor = "pointer";
   updatePropertiesMode();
+  show(editModeEl, _mode !== "edit");
   uiElements.forEach((el) => {
     show(el, _mode === "edit");
   });
@@ -260,6 +262,10 @@ function _initDraw(width, height, map) {
     }
   }
 
+  canvas.on('object:modified', function(e) {
+    refreshObjectProperties();
+  });
+
   canvas.on('selection:created', function(e) {
     handleSelectionChange();
   });
@@ -272,31 +278,31 @@ function _initDraw(width, height, map) {
 
   $("add-circle").onclick = function() {
     var circle = new fabric.Circle({
-      radius: 20, fill: '#00ff00', left: 100, top: 100, padding: 0
+      radius: 50, fill: '#00ff00', left: 125, top: 75, padding: 0
     });
     canvas.add(circle);
-    updateMapName(true);
+    notifyMapUpdate("circle", true);
   };
 
   $("add-triangle").onclick = function() {
     var triangle = new fabric.Triangle({
-      width: 20, height: 30, fill: 'blue', left: 50, top: 50, padding: 0
+      width: 100, height: 100, fill: 'blue', left: 50, top: 150, padding: 0
     });
     canvas.add(triangle);
-    updateMapName(true);
+    notifyMapUpdate("triangle", true);
   };
 
   $("add-rect").onclick = function() {
     var rect = new fabric.Rect();
-    rect.set({ width: 40, height: 30, fill: '#f55', opacity: 0.7, padding: 0 });
+    rect.set({ width: 100, height: 60, fill: '#f55', left: 10, top: 10, opacity: 0.7, padding: 0 });
     canvas.add(rect);
-    updateMapName(true);
+    notifyMapUpdate("rect", true);
   };
 
   $("add-diamond").onclick = function() {
     var rect = new fabric.Rect({
-      left: 200,
-      top: 50,
+      left: 275,
+      top: 150,
       fill: '#F06292',
       width: 100,
       height: 100,
@@ -308,16 +314,18 @@ function _initDraw(width, height, map) {
       hasControls: true
     });
     canvas.add(rect);
-    updateMapName(true);
+    notifyMapUpdate("diamond", true);
   };
 
   $("add-text").onclick = function() {
     let caption = textCaptionEl.value.trim();
     var text = new fabric.Text(caption !== "" ? caption : "Stella", {
-      fill: 'orange'
+      fill: 'orange',
+      left: 150,
+      top: 15,
     });
     canvas.add(text);
-    updateMapName(true);
+    notifyMapUpdate("text", true);
   };
 
   function selectAll() {

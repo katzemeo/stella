@@ -36,6 +36,7 @@ var META = {
   },
   circle: {
     $inherit: "object",
+    radius: "number",
     strokeWidth: "number",
     stroke: { type: "color", caption: "Stroke Color" }
   },
@@ -83,12 +84,6 @@ function expandIdentifier(identifier, separatorChar, allUppercase) {
 
 function handlePropertyChange(name, type) {
   if (_currentObject) {
-    /*
-    const activeObj = _canvas.getActiveObject();
-    if (_currentObject !== activeObj) {
-      console.log(`Warning: active object changed from original!`);
-    }
-    */
     let el = document.getElementById(name);
     //console.log(`${name} changed from "${_currentObject[name]}" to "${el.value}"!`);
     const delta = {};
@@ -101,8 +96,7 @@ function handlePropertyChange(name, type) {
     }
     _currentObject.set(delta);
     _canvas.requestRenderAll();
-    updateMapName(true);
-//    _currentObject = null;
+    notifyMapUpdate("handlePropertyChange", true);
   } else {
     console.log(`Warning: current object not set for property change event!`);
   }
@@ -121,7 +115,7 @@ function deleteCurrentObject() {
   } else {
     _canvas.remove(activeObj);
   }
-  updateMapName(true);
+  notifyMapUpdate("deleteCurrentObject", true);
 }
 
 function createObjectControls(parentEl, object, type=null) {

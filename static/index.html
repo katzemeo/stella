@@ -117,10 +117,14 @@
             title="Copy to Clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">content_copy</i>
           </button>
-          <button id="undo" class="btn btn-light mx-1 px-0 disabled" title="Undo" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="edit-mode" class="btn btn-light mx-1 px-0" onclick="editMode()"
+            title="Edit Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">edit</i>
+          </button>
+          <button id="undo" class="btn btn-light mx-1 px-0 disabled" style="display: none;" title="Undo" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">undo</i>
           </button>
-          <button id="redo" class="btn btn-light mx-1 px-0 disabled" title="Redo" data-bs-toggle="tooltip" data-bs-placement="bottom">
+          <button id="redo" class="btn btn-light mx-1 px-0 disabled" style="display: none;" title="Redo" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">redo</i>
           </button>
           <a id="download" class="btn btn-primary mx-1 px-0" href="#" role="button" title="Download" data-bs-toggle="tooltip" data-bs-placement="bottom">
@@ -188,10 +192,10 @@
 
   <div class="container float-left" style="max-width: 100%; background-color: whitesmoke">
     <div class="row">
-      <div id="canvas-div" class="col-auto px-0" style="background-color: black; overflow: auto;">
+      <div id="canvas-div" class="col-auto px-0 mr-auto" style="background-color: black; overflow: auto;">
         <canvas class="border border-secondary" id="canvas" />
       </div>
-      <div id="options" class="col-auto p-1" style="overflow: auto; display: none;">
+      <div id="options" class="col p-0" style="overflow: auto; display: none;">
         <div id="drawing-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
           <label for="drawing-mode-selector" style="width: 150px; float: left;">Draw Tool:</label>
           <select id="drawing-mode-selector" title="Drawing Mode" data-bs-toggle="tooltip">

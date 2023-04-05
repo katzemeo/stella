@@ -8,9 +8,6 @@ const DEFAULT_WIDTH = 1200;
 const DEFAULT_HEIGHT = 800;
 const NOW = new Date();
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "America/Toronto";
-const EMPTY_MAP = {
-  name: MY_MAP
-};
 
 // Application state (to be persisted)
 var _maps = {};
@@ -25,7 +22,7 @@ var _modeParam = "view";
 var _mode = _modeParam;
 var _filterKeyParam = null;
 var _filterKey = _filterKeyParam;
-var _map = EMPTY_MAP;
+var _map = { name: MY_MAP };
 var _refresh = true;
 var _userInfo = null;
 var _canvas = null;
@@ -59,11 +56,11 @@ window.onload = function () {
     }
   }
 
-  refreshMap();
-
   if (!_mapName) {
     loadMyMap();
   }
+
+  refreshMap();
 
   configureAutomaticSave();
   updateTooltips();
@@ -95,7 +92,7 @@ const saveToStorage = (force=false) => {
     }
     _state.lastModified = _lastModified;
     localStorage.setItem("katzemeo.stella", JSON.stringify(_state));
-    updateMapName(false);
+    notifyMapUpdate("saveToStorage", false);
     writeMessage("Saved to local storage (Updated: "+ formatTime(_state.lastModified) +")");
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
@@ -119,7 +116,7 @@ const restoreFromStorage = () => {
         console.log(error);
       }
     }
-    updateMapName(false);
+    notifyMapUpdate("restoreFromStorage", false);
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
   }
@@ -136,7 +133,7 @@ const deleteLocalStorage = () => {
     localStorage.removeItem("katzemeo.stella");
     writeMessage("Removed state from local storage. Refreshing...");
     clearState();
-    setTimeout(function() { document.location.reload(true); }, 1000);
+    setTimeout(function() { document.location.reload(); }, 1000);
   } else {
     writeMessage("Local storage not supported!");
   }
@@ -226,9 +223,8 @@ function showMyMap() {
   };
 
   if (!_maps[map.name]) {
-    _mapName = map.name;
     _maps[map.name] = map;
-    _modified = true;
+    _mode = "edit";
   } else {
     map = _maps[map.name];
   }
@@ -237,10 +233,6 @@ function showMyMap() {
 }
 
 function showMap(mapName) {
-  if (_mapName !== mapName) {
-    _mapName = mapName;
-    _modified = true;
-  }
   if (mapName == MY_MAP) {
     showMyMap();
   } else {
@@ -259,8 +251,7 @@ function removeMap(mapName) {
     map = Object.values(_maps)[0];
     _mapName = map.name;
   } else {
-    map = EMPTY_MAP;
-    _mapName = null;
+    showMyMap();
   }
   _modified = true;
 
@@ -274,9 +265,9 @@ function setFilterKey(filterKey) {
 }
 
 function setMap(map) {
-  let el;
   const resetUI = (_map !== map);
   _map = map;
+  _mapName = _map && map.name ? map.name : MY_MAP;
 
   if (resetUI) {
     _filterKey = _filterKeyParam;
@@ -285,13 +276,14 @@ function setMap(map) {
 
   setFilterKey(_filterKey);
 
-  _date = _map.date ? new Date(_map.date) : new Date(NOW);
+  _date = (_map && _map.date) ? new Date(_map.date) : new Date(NOW);
   enableDisableNavigation();
   initCanvas(map, _canvas ? null : _canvasSize);
-  updateMapName();
+  notifyMapUpdate("setMap");
 }
 
-function updateMapName(modified=_modified) {
+function notifyMapUpdate(event, modified=_modified) {
+  writeMessage(event);
   _modified = modified;
   if (modified) {
     _lastModified = new Date();
@@ -336,6 +328,7 @@ function processMap(data) {
 
 function loadMyMap() {
   //loadMap("MY_MAP");
+  showMyMap();
 }
 
 function loadMap(mapName) {
@@ -523,4 +516,10 @@ function copyMap() {
     }, 1));
     writeMessage(`Copied map "${data.name}" information to clipboard`);
   }
+}
+
+function editMode() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'edit');
+  window.location.assign(url.search);
 }
