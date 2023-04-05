@@ -1,12 +1,14 @@
 
-function _initDraw(width, height, json=null) {
+function _initDraw(width, height, map) {
   var $ = function(id){return document.getElementById(id)};
   var show = function(el,v) { el.style.display = v ? "" : "none"; }
+  var origWidth = width;
+  var origHeight = height;
 
   const originalToImage = fabric.Image.prototype.toObject;
   const myAdditional = ['url'];
   fabric.Image.prototype.toObject = function (additionalProperties) {
-      return originalToImage.call(this, myAdditional.concat(additionalProperties));
+    return originalToImage.call(this, myAdditional.concat(additionalProperties));
   }
 
   fabric.Object.prototype.transparentCorners = false;
@@ -45,22 +47,27 @@ function _initDraw(width, height, json=null) {
     groupEl, ungroupEl, toFrontEl, toBackEl, rotateLeftEl, rotateRightEl, deleteEl, clearEl ];
 
   function setCanvasWidth(width, render=false) {
+    origWidth = canvas.width;
     $('canvas').width = width;
     canvas.setWidth(width);
     if (render) {
       canvas.renderAll();
     }
+    return origWidth;
   }
 
   function setCanvasHeight(height, render=false) {
+    origHeight = canvas.height;
     $('canvas').height = height;
     canvas.setHeight(height);
     if (render) {
       canvas.renderAll();
     }
+    return origHeight;
   }
 
   $('download').addEventListener('click', saveImage, false);
+  $('file-name').value = map.name ?? 'stella_canvas';
   function saveImage(e) {
     let filename = $('file-name').value.trim() ?? 'stella_canvas';
     const format = $('file-type').value.toLowerCase() ?? 'png';
@@ -84,8 +91,6 @@ function _initDraw(width, height, json=null) {
 
   fabric.Object.prototype.selectable =  _mode === "edit";
   fabric.Image.prototype.hoverCursor = "pointer";
-  //fabric.Object.prototype.lockMovementX =  _mode === "edit";
-  //fabric.Object.prototype.lockMovementY =  _mode === "edit";
   updatePropertiesMode();
   uiElements.forEach((el) => {
     show(el, _mode === "edit");
@@ -104,8 +109,8 @@ function _initDraw(width, height, json=null) {
   $('canvas-width').valueAsNumber = width;
   setCanvasHeight(height);
   $('canvas-height').valueAsNumber = height;
-  if (json) {
-    canvas.loadFromJSON(json);
+  if (map.canvasData) {
+    canvas.loadFromJSON(map.canvasData);
   }
   updateDrawingMode();
 
@@ -165,6 +170,8 @@ function _initDraw(width, height, json=null) {
         targetURL = obj.url;
         writeMessage(targetURL);
       }
+    } else {
+      enableKeyboard();
     }
   });
 
@@ -172,6 +179,8 @@ function _initDraw(width, height, json=null) {
     if (targetURL) {
       targetURL = null;
       writeMessage("");
+    } if (!opt.target) {
+      disableKeyboard();
     }
   });
 
@@ -222,23 +231,43 @@ function _initDraw(width, height, json=null) {
     updateZoomValues();
   };
 
-  function handleSelection(e) {
+  function getCurrentObject() {
+    let activeObj = _canvas.getActiveObject();
+    if (activeObj && activeObj.type === 'activeSelection') {
+      activeObj = null;
+    }
+    return activeObj;
+  }
+  
+  function handleSelectionChange() {
+    let selectedObject = getCurrentObject();
+    if (selectedObject) {
+      writeMessage(`Object of type "${selectedObject.type}" selected`);
+    } else if (_currentObject) {
+      writeMessage("");
+    }
+    _currentObject = selectedObject;
+    refreshObjectProperties();
+  }
+
+  function refreshObjectProperties() {
     removeChildren(objectPropsEl);
-    if (e.selected && e.selected.length === 1) {
-      createObjectControls(objectPropsEl, e.selected[0]);
+    if (_currentObject) {
+      createObjectControls(objectPropsEl, _currentObject);
       show(objectPropsEl, true);
     } else {
       show(objectPropsEl, false);
     }
   }
+
   canvas.on('selection:created', function(e) {
-    handleSelection(e);
+    handleSelectionChange();
   });
   canvas.on('selection:updated', function(e) {
-    handleSelection(e);
+    handleSelectionChange();
   });
   canvas.on('selection:cleared', function(e) {
-    handleSelection(e);
+    handleSelectionChange();
   });
 
   $("add-circle").onclick = function() {
@@ -246,6 +275,7 @@ function _initDraw(width, height, json=null) {
       radius: 20, fill: '#00ff00', left: 100, top: 100, padding: 0
     });
     canvas.add(circle);
+    updateMapName(true);
   };
 
   $("add-triangle").onclick = function() {
@@ -253,12 +283,14 @@ function _initDraw(width, height, json=null) {
       width: 20, height: 30, fill: 'blue', left: 50, top: 50, padding: 0
     });
     canvas.add(triangle);
+    updateMapName(true);
   };
 
   $("add-rect").onclick = function() {
     var rect = new fabric.Rect();
     rect.set({ width: 40, height: 30, fill: '#f55', opacity: 0.7, padding: 0 });
     canvas.add(rect);
+    updateMapName(true);
   };
 
   $("add-diamond").onclick = function() {
@@ -276,6 +308,7 @@ function _initDraw(width, height, json=null) {
       hasControls: true
     });
     canvas.add(rect);
+    updateMapName(true);
   };
 
   $("add-text").onclick = function() {
@@ -284,6 +317,7 @@ function _initDraw(width, height, json=null) {
       fill: 'orange'
     });
     canvas.add(text);
+    updateMapName(true);
   };
 
   function selectAll() {
@@ -312,6 +346,7 @@ function _initDraw(width, height, json=null) {
     }
     activeObj.toGroup();
     canvas.requestRenderAll();
+    handleSelectionChange();
   };
 
   ungroupEl.onclick = function() {
@@ -366,6 +401,13 @@ function _initDraw(width, height, json=null) {
   $("fit_canvas").onclick = function() {
     let activeObj = canvas.getActiveObject();
     if (!activeObj) {
+      if (_mode === "edit") {
+        setCanvasWidth(origWidth);
+        setCanvasHeight(origHeight);
+      } else {
+        setCanvasWidth(window.innerWidth);
+        setCanvasHeight(window.innerHeight);
+      }
       activeObj = selectAll();
     }
     let scaleX = canvas.width / activeObj.width;
@@ -449,21 +491,7 @@ function _initDraw(width, height, json=null) {
     canvas.requestRenderAll();
   };
 
-  deleteEl.onclick = function() {
-    const activeObj = canvas.getActiveObject();
-    if (!activeObj) {
-      return;
-    }
-    if (activeObj.type === 'activeSelection') {
-      activeObj.forEachObject(function(obj) {
-        canvas.remove(obj);
-      });
-      canvas.discardActiveObject();
-    } else {
-      canvas.remove(activeObj);
-    }
-  };
-
+  deleteEl.onclick = deleteCurrentObject
   clearEl.onclick = function() {
     if (_mode === "edit") {
       canvas.clear();

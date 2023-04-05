@@ -15,6 +15,7 @@ const EMPTY_MAP = {
 // Application state (to be persisted)
 var _maps = {};
 var _mapName = null;
+var _lastModified = NOW;
 
 // Application UI related state
 var _sortOrders = {};
@@ -29,6 +30,7 @@ var _refresh = true;
 var _userInfo = null;
 var _canvas = null;
 var _canvasSize = null;
+var _currentObject = null;
 
 function clearState() {
   _maps = {};
@@ -85,11 +87,15 @@ const saveToStorage = (force=false) => {
     _state._mode = _mode;
     if (_canvas) {
       _map.canvasData = _canvas.toJSON();
-      _state.canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
+      if (_mode === "edit") {
+        _state.canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
+      } else {
+        _state.canvasSize = _canvasSize;
+      }
     }
-    _state.lastModified = new Date();
+    _state.lastModified = _lastModified;
     localStorage.setItem("katzemeo.stella", JSON.stringify(_state));
-    _modified = false;
+    updateMapName(false);
     writeMessage("Saved to local storage (Updated: "+ formatTime(_state.lastModified) +")");
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
@@ -106,13 +112,14 @@ const restoreFromStorage = () => {
         _mapName = _mapNameParam ?? _state._mapName;
         _mode = _modeParam ?? _state._mode;
         _canvasSize = _state.canvasSize;
+        _lastModified = _state.lastModified;
         writeMessage("Restored from local storage (Updated: "+ formatTime(_state.lastModified) +")");
         return true;
       } catch (error) {
         console.log(error);
       }
     }
-    _modified = false;
+    updateMapName(false);
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
   }
@@ -163,7 +170,7 @@ function appendItem(parentEl, innerHTML, className = null) {
   parentEl.appendChild(li);
 }
 
-function initCanvas(canvasData, canvasSize=null) {
+function initCanvas(map, canvasSize=null) {
   if (_canvas) {
     _canvas.dispose();
     if (!canvasSize) {
@@ -174,7 +181,7 @@ function initCanvas(canvasData, canvasSize=null) {
     canvasSize = { width: _mode !== "edit" ? window.innerWidth : DEFAULT_WIDTH,
       height: _mode !== "edit" ? window.innerHeight : DEFAULT_HEIGHT };
   }
-  _canvas = _initDraw(canvasSize.width, canvasSize.height, canvasData);
+  _canvas = _initDraw(canvasSize.width, canvasSize.height, map);
 }
 
 function refreshMap(map = _map) {
@@ -280,11 +287,18 @@ function setMap(map) {
 
   _date = _map.date ? new Date(_map.date) : new Date(NOW);
   enableDisableNavigation();
-  initCanvas(map.canvasData, _canvas ? null : _canvasSize);
+  initCanvas(map, _canvas ? null : _canvasSize);
+  updateMapName();
+}
 
+function updateMapName(modified=_modified) {
+  _modified = modified;
+  if (modified) {
+    _lastModified = new Date();
+  }
   el = document.getElementById("map_name");
-  el.innerHTML = _map.name;
-  el.title = `${formatDate(NOW)}`;
+  el.innerText = _map.name + (_modified ? " *" : "");
+  el.title = `${formatTime(_lastModified)}`;
 }
 
 function enableDisableNavigation() {
@@ -307,7 +321,7 @@ function processMap(data) {
 
   map.name = map.name ?? MY_MAP;
   map.canvasData = data.canvasData ?? map.canvasData;
-  initCanvas(map.canvasData);
+  initCanvas(map);
 
   if (!_maps[map.name]) {
     _mapName = map.name;

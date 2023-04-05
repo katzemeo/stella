@@ -82,11 +82,15 @@ function expandIdentifier(identifier, separatorChar, allUppercase) {
 }
 
 function handlePropertyChange(name, type) {
-  const activeObj = _canvas.getActiveObject();
-  if (activeObj) {
+  if (_currentObject) {
+    /*
+    const activeObj = _canvas.getActiveObject();
+    if (_currentObject !== activeObj) {
+      console.log(`Warning: active object changed from original!`);
+    }
+    */
     let el = document.getElementById(name);
-    console.log(activeObj);
-    //console.log(`${name} changed from "${activeObj[name]}" to "${el.value}"!`);
+    //console.log(`${name} changed from "${_currentObject[name]}" to "${el.value}"!`);
     const delta = {};
     if (type === "number") {
       delta[name] = el.valueAsNumber;
@@ -95,9 +99,29 @@ function handlePropertyChange(name, type) {
     } else {
       delta[name] = el.value;
     }
-    activeObj.set(delta);
+    _currentObject.set(delta);
     _canvas.requestRenderAll();
+    updateMapName(true);
+//    _currentObject = null;
+  } else {
+    console.log(`Warning: current object not set for property change event!`);
   }
+}
+
+function deleteCurrentObject() {
+  const activeObj = _canvas.getActiveObject();
+  if (!activeObj) {
+    return;
+  }
+  if (activeObj.type === 'activeSelection') {
+    activeObj.forEachObject(function(obj) {
+      _canvas.remove(obj);
+    });
+    _canvas.discardActiveObject();
+  } else {
+    _canvas.remove(activeObj);
+  }
+  updateMapName(true);
 }
 
 function createObjectControls(parentEl, object, type=null) {
@@ -243,18 +267,41 @@ function createSelect(name, meta, value, onChange) {
 
 var _ctrl = false;
 var _clipboard = null;
+var _cKey = keyboard("c"), _vKey = keyboard("v"), _sKey = keyboard("s"),
+  _deleteKey = keyboard("Delete"), _ctrlKey = keyboard("Control");
+
 function initKeyboard() {
-  let cKey = keyboard("c"), vKey = keyboard("v"), ctrl = keyboard("Control");
-  ctrl.press = () => { _ctrl = true; };
-  ctrl.release = () => { _ctrl = false; };
-  cKey.press = () => { if (_ctrl && _canvas && _canvas.getActiveObject()) {
+  _ctrlKey.press = () => { _ctrl = true; };
+  _ctrlKey.release = () => { _ctrl = false; };
+  _cKey.press = () => { if (_ctrl && _canvas && _canvas.getActiveObject()) {
     _canvas.getActiveObject().clone(function(cloned) { _clipboard = cloned; });
   } };
-  vKey.press = pasteCloned;
+  _vKey.press = pasteCloned;
+  _sKey.press = () => { if (_ctrl) {
+    saveToStorage();
+  } };
+  _deleteKey.press = deleteCurrentObject;
+}
 
-  cKey.subscribe();
-  vKey.subscribe();
-  ctrl.subscribe();
+function enableKeyboard() {
+  // Prevent duplicates (if previously missed)
+  disableKeyboard();
+
+  //console.log("enabling keyboard...");
+  _cKey.subscribe();
+  _vKey.subscribe();
+  _sKey.subscribe();
+  _ctrlKey.subscribe();
+  _deleteKey.subscribe();
+}
+
+function disableKeyboard() {
+  //console.log("disabling keyboard...");
+  _cKey.unsubscribe();
+  _vKey.unsubscribe();
+  _sKey.unsubscribe();
+  _ctrlKey.unsubscribe();
+  _deleteKey.unsubscribe();
 }
 
 function pasteCloned() {
