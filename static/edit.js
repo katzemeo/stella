@@ -263,6 +263,7 @@ var _ctrl = false;
 var _clipboard = null;
 var _cKey = keyboard("c"), _vKey = keyboard("v"), _sKey = keyboard("s"),
   _deleteKey = keyboard("Delete"), _ctrlKey = keyboard("Control");
+var _keyboardEnabled = false;
 
 function initKeyboard() {
   _ctrlKey.press = () => { _ctrl = true; };
@@ -278,10 +279,13 @@ function initKeyboard() {
 }
 
 function enableKeyboard() {
-  // Prevent duplicates (if previously missed)
-  disableKeyboard();
+  // Prevent duplicates (if disable event was previously missed)
+  if (_keyboardEnabled) {
+    console.log("Keyboard already enabled!");
+    return;
+  }
 
-  //console.log("enabling keyboard...");
+  _keyboardEnabled = true;
   _cKey.subscribe();
   _vKey.subscribe();
   _sKey.subscribe();
@@ -290,12 +294,18 @@ function enableKeyboard() {
 }
 
 function disableKeyboard() {
-  //console.log("disabling keyboard...");
+  if (!_keyboardEnabled) {
+    console.log("Keyboard already disabled!");
+    return;
+  }
+
   _cKey.unsubscribe();
   _vKey.unsubscribe();
   _sKey.unsubscribe();
   _ctrlKey.unsubscribe();
   _deleteKey.unsubscribe();
+
+  _keyboardEnabled = false;
 }
 
 function pasteCloned() {

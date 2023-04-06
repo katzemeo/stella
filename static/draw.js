@@ -44,7 +44,7 @@ function _initDraw(width, height, map) {
     rotateRightEl = $("rotate_right"),  
     deleteEl = $("delete"),
     clearEl = $('clear-canvas');
-  const uiElements = [ undoEl, redoEl, drawingModeEl, shapeModeEl, textModeEl, alignModeEl, propertiesModeEl, selectAllEl,
+  const uiElements = [ /*undoEl, redoEl,*/ drawingModeEl, shapeModeEl, textModeEl, alignModeEl, propertiesModeEl, selectAllEl,
     groupEl, ungroupEl, toFrontEl, toBackEl, rotateLeftEl, rotateRightEl, deleteEl, clearEl ];
 
   function setCanvasWidth(width, render=false) {
@@ -158,33 +158,32 @@ function _initDraw(width, height, map) {
     this.isDragging = false;
     this.selection = _mode === "edit";
 
-    if (targetURL &&  _mode !== "edit") {
-      window.open(targetURL, "stella_link");
-      targetURL = null;
+    if (_targetURL &&  _mode !== "edit") {
+      window.open(_targetURL, "stella_link");
+      _targetURL = null;
     }
   });
 
-  let targetURL = null;
+  let _targetURL = null;
   canvas.on('mouse:over', function(opt) {
     if (opt.target) {
       const obj = opt.target;
-      if (!targetURL && obj.url) {
-        targetURL = obj.url;
-        writeMessage(targetURL);
+      if (!_targetURL && obj.url) {
+        _targetURL = obj.url;
+        writeMessage(_targetURL);
       }
-    } else {
-      enableKeyboard();
-    }
+    }    
   });
 
   canvas.on('mouse:out', function(opt) {
-    if (targetURL) {
-      targetURL = null;
+    if (_targetURL) {
+      _targetURL = null;
       writeMessage("");
-    } if (!opt.target) {
-      disableKeyboard();
-    }
+    }    
   });
+
+  canvas.upperCanvasEl.onmouseenter = enableKeyboard;
+  canvas.upperCanvasEl.onmouseleave = disableKeyboard;
 
   // Zoom support
   function fixZoom(zoom) {
@@ -243,13 +242,17 @@ function _initDraw(width, height, map) {
   
   function handleSelectionChange() {
     let selectedObject = getCurrentObject();
-    if (selectedObject) {
-      writeMessage(`Object of type "${selectedObject.type}" selected`);
-    } else if (_currentObject) {
-      writeMessage("");
-    }
-    _currentObject = selectedObject;
-    refreshObjectProperties();
+    // Defer handling to allow an inflight events to complete / avoid race condition
+    // i.e. allow handlePropertyChange() to complete before changing _currentObject
+    setTimeout(function() {
+      if (selectedObject) {
+        writeMessage(`Object of type "${selectedObject.type}" selected`);
+      } else if (_currentObject) {
+        writeMessage("");
+      }
+      _currentObject = selectedObject;
+      refreshObjectProperties();
+    }, 100);
   }
 
   function refreshObjectProperties() {
