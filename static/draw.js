@@ -2,8 +2,18 @@
 function _initDraw(width, height, map) {
   var $ = function(id){return document.getElementById(id)};
   var show = function(el,v) { el.style.display = v ? "" : "none"; }
+
   var origWidth = width;
   var origHeight = height;
+
+  var canvas = new fabric.Canvas('canvas', {
+    isDrawingMode: false,
+    selection: _mode === "edit",
+    defaultCursor: 'default',
+    hoverCursor: _mode === "edit" ? 'grab' : 'default',
+    moveCursor: _mode === "edit" ? 'grabbing' : 'default',
+    backgroundColor: null
+  });
 
   const originalToImage = fabric.Image.prototype.toObject;
   const myAdditional = ['url'];
@@ -90,21 +100,18 @@ function _initDraw(width, height, map) {
     this.download = filename;
   }
 
+  const autosaveEl = $('autosave');
+  autosaveEl.checked = _autosave;
+  autosaveEl.onchange = function() {
+    _autosave = autosaveEl.checked;
+  };
+
   fabric.Object.prototype.selectable =  _mode === "edit";
   fabric.Image.prototype.hoverCursor = "pointer";
   updatePropertiesMode();
   show(editModeEl, _mode !== "edit");
   uiElements.forEach((el) => {
     show(el, _mode === "edit");
-  });
-
-  var canvas = new fabric.Canvas('canvas', {
-    isDrawingMode: false,
-    selection: _mode === "edit",
-    defaultCursor: 'default',
-    hoverCursor: _mode === "edit" ? 'grab' : 'default',
-    moveCursor: _mode === "edit" ? 'grabbing' : 'default',
-    backgroundColor: null
   });
 
   setCanvasWidth(width);
@@ -117,9 +124,11 @@ function _initDraw(width, height, map) {
   updateDrawingMode();
 
   $('canvas-width').onchange = function() {
+    notifyMapUpdate("canvas-width", true);
     setCanvasWidth($('canvas-width').valueAsNumber, true);
   };
   $('canvas-height').onchange = function() {
+    notifyMapUpdate("canvas-height", true);
     setCanvasHeight($('canvas-height').valueAsNumber, true);
   };
 
@@ -267,6 +276,7 @@ function _initDraw(width, height, map) {
 
   canvas.on('object:modified', function(e) {
     refreshObjectProperties();
+    notifyMapUpdate("object:modified", true);
   });
 
   canvas.on('selection:created', function(e) {
@@ -416,8 +426,11 @@ function _initDraw(width, height, map) {
         setCanvasWidth(origWidth);
         setCanvasHeight(origHeight);
       } else {
+        let headerEl = document.getElementById("header");
+        let footerEl = document.getElementById("footer");
+        let adjustHeight = headerEl.offsetHeight + footerEl.offsetHeight;
         setCanvasWidth(window.innerWidth);
-        setCanvasHeight(window.innerHeight);
+        setCanvasHeight(window.innerHeight - adjustHeight);
       }
       activeObj = selectAll();
     }

@@ -28,6 +28,7 @@ var _userInfo = null;
 var _canvas = null;
 var _canvasSize = null;
 var _currentObject = null;
+var _autosave = true;
 
 function clearState() {
   _maps = {};
@@ -78,6 +79,7 @@ var _modified = false;
 var _state = null;
 const saveToStorage = (force=false) => {
   if (localStorage && (_modified || force)) {
+    //console.log(`saveToStorage() - force=${force}, modified=${_modified}`);
     _state = {};
     _state._maps = _maps;
     _state._mapName = _mapName;
@@ -90,13 +92,16 @@ const saveToStorage = (force=false) => {
         _state.canvasSize = _canvasSize;
       }
     }
+    _state.autosave = _autosave;
     _state.lastModified = _lastModified;
     localStorage.setItem("katzemeo.stella", JSON.stringify(_state));
     notifyMapUpdate("saveToStorage", false);
     writeMessage("Saved to local storage (Updated: "+ formatTime(_state.lastModified) +")");
+    return true;
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
   }
+  return false;
 };
 
 const restoreFromStorage = () => {
@@ -109,14 +114,15 @@ const restoreFromStorage = () => {
         _mapName = _mapNameParam ?? _state._mapName;
         _mode = _modeParam ?? _state._mode;
         _canvasSize = _state.canvasSize;
+        _autosave = _state.autosave;
         _lastModified = _state.lastModified;
         writeMessage("Restored from local storage (Updated: "+ formatTime(_state.lastModified) +")");
+        notifyMapUpdate("restoreFromStorage", false);
         return true;
       } catch (error) {
         console.log(error);
       }
     }
-    notifyMapUpdate("restoreFromStorage", false);
   } else if (!localStorage) {
     writeMessage("Local storage not supported!");
   }
@@ -142,7 +148,12 @@ const deleteLocalStorage = () => {
 const configureAutomaticSave = () => {
   if (localStorage) {
     setInterval(saveToStorage, 60 * 1000);
-    window.onbeforeunload = saveToStorage;
+    window.addEventListener('beforeunload', function (event) {
+      event.stopImmediatePropagation();
+      if (_autosave) {
+        saveToStorage();
+      }
+    });
   } else {
     writeMessage("Local storage not supported!");
   }
@@ -169,14 +180,19 @@ function appendItem(parentEl, innerHTML, className = null) {
 
 function initCanvas(map, canvasSize=null) {
   if (_canvas) {
-    _canvas.dispose();
     if (!canvasSize) {
       canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
     }
+    _canvas.dispose();
   }
   if (!canvasSize) {
-    canvasSize = { width: _mode !== "edit" ? window.innerWidth : DEFAULT_WIDTH,
-      height: _mode !== "edit" ? window.innerHeight : DEFAULT_HEIGHT };
+    let headerEl = document.getElementById("header");
+    let footerEl = document.getElementById("footer");
+    let adjustHeight = headerEl.offsetHeight + footerEl.offsetHeight;
+    canvasSize = {
+      width: _mode !== "edit" ? window.innerWidth : DEFAULT_WIDTH,
+      height: window.innerHeight - adjustHeight
+    };
   }
   _canvas = _initDraw(canvasSize.width, canvasSize.height, map);
 }
@@ -283,7 +299,7 @@ function setMap(map) {
 }
 
 function notifyMapUpdate(event, modified=_modified) {
-  writeMessage(event);
+  writeMessage(`notify - "${event}" (modified=${modified})`, true);
   _modified = modified;
   if (modified) {
     _lastModified = new Date();

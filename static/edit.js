@@ -46,7 +46,9 @@ var META = {
   rect: {
     $inherit: "object",
     strokeWidth: "number",
-    stroke: { type: "color", caption: "Stroke Color" }
+    stroke: { type: "color", caption: "Stroke Color" },
+    rx: "number",
+    ry: "number",
   },
   path: {
     $inherit: "object"
@@ -118,6 +120,11 @@ function deleteCurrentObject() {
   notifyMapUpdate("deleteCurrentObject", true);
 }
 
+const MAX_FRAC_DIGITS = 2;
+function toFixed(n) {
+  return Number(n.toFixed(MAX_FRAC_DIGITS));
+}
+
 function createObjectControls(parentEl, object, type=null) {
   const meta = META[type ?? object.type];
   if (meta) {
@@ -146,9 +153,9 @@ function createObjectControls(parentEl, object, type=null) {
 
 function createControl(name, meta, value, onChange) {
   if (meta === "number") {
-    return createNumberControl(name, {}, value, onChange);
+    return createNumberControl(name, {}, toFixed(value), onChange);
   } else if (meta.type === "number") {
-    return createNumberControl(name, meta, value, onChange);
+    return createNumberControl(name, meta, toFixed(value), onChange);
   } else if (meta === "boolean") {
     return createBooleanControl(name, meta, value, onChange);
   } else if (meta === "color" || meta.type === "color") {
