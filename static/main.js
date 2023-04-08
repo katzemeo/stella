@@ -23,7 +23,6 @@ var _mode = _modeParam;
 var _filterKeyParam = null;
 var _filterKey = _filterKeyParam;
 var _map = { name: MY_MAP };
-var _refresh = true;
 var _userInfo = null;
 var _canvas = null;
 var _canvasSize = null;
@@ -78,7 +77,7 @@ function updateTooltips() {
 var _modified = false;
 var _state = null;
 const saveToStorage = (force=false) => {
-  if (localStorage && (_modified || force)) {
+  if (localStorage && _modified && (_autosave || force)) {
     //console.log(`saveToStorage() - force=${force}, modified=${_modified}`);
     _state = {};
     _state._maps = _maps;
@@ -150,9 +149,7 @@ const configureAutomaticSave = () => {
     setInterval(saveToStorage, 60 * 1000);
     window.addEventListener('beforeunload', function (event) {
       event.stopImmediatePropagation();
-      if (_autosave) {
-        saveToStorage();
-      }
+      saveToStorage();
     });
   } else {
     writeMessage("Local storage not supported!");
@@ -282,20 +279,19 @@ function setFilterKey(filterKey) {
 
 function setMap(map) {
   const resetUI = (_map !== map);
-  _map = map;
-  _mapName = _map && map.name ? map.name : MY_MAP;
-
   if (resetUI) {
     _filterKey = _filterKeyParam;
-    _refresh = true;
+    saveToStorage();
   }
 
+  _map = map;
+  _mapName = _map && map.name ? map.name : MY_MAP;
   setFilterKey(_filterKey);
 
   _date = (_map && _map.date) ? new Date(_map.date) : new Date(NOW);
   enableDisableNavigation();
   initCanvas(map, _canvas ? null : _canvasSize);
-  notifyMapUpdate("setMap");
+  notifyMapUpdate("setMap", false);
 }
 
 function notifyMapUpdate(event, modified=_modified) {
@@ -441,7 +437,7 @@ function readImageFile(blob, onSuccess) {
         top: 60
       });
       img.scaleToWidth(200);
-      _canvas.add(img).setActiveObject(img).renderAll();
+      _canvas.add(img).setActiveObject(img).requestRenderAll();
       onSuccess();
     }
   }

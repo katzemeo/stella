@@ -40,9 +40,6 @@ var META = {
     strokeWidth: "number",
     stroke: { type: "color", caption: "Stroke Color" }
   },
-  group: {
-    $inherit: "object"
-  },
   rect: {
     $inherit: "object",
     strokeWidth: "number",
@@ -50,9 +47,31 @@ var META = {
     rx: "number",
     ry: "number",
   },
+  polygon: {
+    $inherit: "object",
+    strokeWidth: "number",
+    stroke: { type: "color", caption: "Stroke Color" }
+  },
+  group: {
+    $inherit: "object"
+  },
   path: {
     $inherit: "object"
-  }
+  },
+  feat: {
+    $inherit: "object",
+    strokeWidth: "number",
+    stroke: { type: "color", caption: "Stroke Color" },
+    summary: "text",
+    id: { type: "text", caption: "Feature ID" },
+    sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 32, step: 1 },
+    status: { type: "enum", values: ["backlog", "pending", "inprogress", "complete"], captions: { inprogress: "In Progress" } },
+  },
+  item: {
+    $inherit: "object",
+    id: { type: "text", caption: "Item ID" },
+    sp: { type: "number", caption: "Story Point (SP)" }
+  },
 }
 
 function toCaptionFromIdentifier(identifier) {
@@ -153,9 +172,9 @@ function createObjectControls(parentEl, object, type=null) {
 
 function createControl(name, meta, value, onChange) {
   if (meta === "number") {
-    return createNumberControl(name, {}, toFixed(value), onChange);
+    return createNumberControl(name, {}, value !== undefined ? toFixed(value) : "", onChange);
   } else if (meta.type === "number") {
-    return createNumberControl(name, meta, toFixed(value), onChange);
+    return createNumberControl(name, meta, value !== undefined ? toFixed(value) : "", onChange);
   } else if (meta === "boolean") {
     return createBooleanControl(name, meta, value, onChange);
   } else if (meta === "color" || meta.type === "color") {
@@ -260,7 +279,11 @@ function createSelect(name, meta, value, onChange) {
   const el = document.createElement("select");
   el.id = name;
   meta.values.forEach((v) => {
-    el.appendChild(createOption(v, v, value));
+    let caption = v;
+    if (meta.captions) {
+      caption = meta.captions[v] ?? toCaptionFromIdentifier(v);
+    }
+    el.appendChild(createOption(v, caption, value));
   });
   el.setAttribute("onchange", onChange);
   return el;

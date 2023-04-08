@@ -1,3 +1,63 @@
+function _genPolyPoints(sides, radius) {
+  const sweep = Math.PI * 2 / sides;
+  const cx = radius;
+  const cy = radius;
+  const points = [];
+  for (var i = 0; i < sides; i++) {
+    let x = cx + radius * Math.cos(i * sweep);
+    let y = cy + radius * Math.sin(i * sweep);
+    points.push({ x: x, y: y });
+  }
+  return (points);
+}
+
+function _createPentagon() {
+  const points = _genPolyPoints(5, 75);
+  const poly = new fabric.Polygon(points, {
+    left: 250,
+    top: 250,
+    angle: 270,
+    fill: '#F06292',
+    stroke: "#880E4F",
+    strokeWidth: 2
+  });
+  return poly;
+}
+
+function _createHexagon() {
+  const points = _genPolyPoints(6, 75);
+  const poly = new fabric.Polygon(points, {
+    left: 50,
+    top: 50,
+    fill: '#F06292',
+    stroke: "#880E4F",
+    strokeWidth: 2
+  });
+  return poly;
+}
+
+function _createItem(id, sp) {
+  let rect = new fabric.Rect();
+  rect.set({
+    width: 150, height: 100, fill: '#f55', stroke: "#0CB620", strokeWidth: 2,
+    rx: 8, ry: 8,
+    originX: "center",
+    originY: "center"
+  });
+  let text = new fabric.Text(`<${id}>\n ${sp} SP`, {
+    fontSize: 30,
+    originX: "center",
+    originY: "center"
+  });
+
+  var item = new fabric.Group([rect, text], {
+    id: id,
+    sp: sp,
+    left: 150,
+    top: 100
+  });
+  return item;
+}
 
 function _initDraw(width, height, map) {
   var $ = function(id){return document.getElementById(id)};
@@ -62,7 +122,7 @@ function _initDraw(width, height, map) {
     $('canvas').width = width;
     canvas.setWidth(width);
     if (render) {
-      canvas.renderAll();
+      canvas.requestRenderAll();
     }
     return origWidth;
   }
@@ -72,7 +132,7 @@ function _initDraw(width, height, map) {
     $('canvas').height = height;
     canvas.setHeight(height);
     if (render) {
-      canvas.renderAll();
+      canvas.requestRenderAll();
     }
     return origHeight;
   }
@@ -146,11 +206,6 @@ function _initDraw(width, height, map) {
   canvas.on('mouse:move', function(opt) {
     if (this.isDragging) {
       const e = opt.e;
-      /*
-      if (e.altKey) {
-        this.defaultCursor = 'grabbing';
-      }
-      */
       var vpt = this.viewportTransform;
       vpt[4] += e.clientX - this.lastPosX;
       vpt[5] += e.clientY - this.lastPosY;
@@ -291,7 +346,7 @@ function _initDraw(width, height, map) {
 
   $("add-circle").onclick = function() {
     var circle = new fabric.Circle({
-      radius: 50, fill: '#00ff00', left: 125, top: 75, padding: 0
+      left: 125, top: 75, radius: 75, fill: '#00ff00', stroke: "#0CB620", strokeWidth: 2, padding: 0
     });
     canvas.add(circle);
     notifyMapUpdate("circle", true);
@@ -299,7 +354,7 @@ function _initDraw(width, height, map) {
 
   $("add-triangle").onclick = function() {
     var triangle = new fabric.Triangle({
-      width: 100, height: 100, fill: 'blue', left: 50, top: 150, padding: 0
+      left: 50, top: 150, width: 150, height: 150, fill: '#00ff00', stroke: "#0CB620", strokeWidth: 2, padding: 0
     });
     canvas.add(triangle);
     notifyMapUpdate("triangle", true);
@@ -307,9 +362,21 @@ function _initDraw(width, height, map) {
 
   $("add-rect").onclick = function() {
     var rect = new fabric.Rect();
-    rect.set({ width: 100, height: 60, fill: '#f55', left: 10, top: 10, opacity: 0.7, padding: 0 });
+    rect.set({
+      left: 10, top: 10, width: 150, height: 100, fill: '#f55', stroke: "#0CB620", strokeWidth: 2, opacity: 0.7, padding: 0
+    });
     canvas.add(rect);
     notifyMapUpdate("rect", true);
+  };
+
+  $("add-pentagon").onclick = function() {
+    canvas.add(_createPentagon());
+    notifyMapUpdate("pentagon", true);
+  };
+
+  $("add-hexagon").onclick = function() {
+    canvas.add(_createHexagon());
+    notifyMapUpdate("hexagon", true);
   };
 
   $("add-diamond").onclick = function() {
@@ -317,17 +384,26 @@ function _initDraw(width, height, map) {
       left: 275,
       top: 150,
       fill: '#F06292',
-      width: 100,
-      height: 100,
+      width: 150,
+      height: 150,
       strokeWidth: 2,
       stroke: "#880E4F",
       rx: 10,
       ry: 10,
-      angle: 45,
-      hasControls: true
+      angle: 45
     });
     canvas.add(rect);
     notifyMapUpdate("diamond", true);
+  };
+
+  $("add-code").onclick = function() {
+    canvas.add(_createItem("itemID", 8));
+    notifyMapUpdate("item", true);
+  };
+
+  $("add-code-block").onclick = function() {
+    canvas.add(_createFeat("featID", 30));
+    notifyMapUpdate("feat", true);
   };
 
   $("add-text").onclick = function() {
@@ -408,7 +484,7 @@ function _initDraw(width, height, map) {
     var angle = activeObj.angle + angleOffset;
     angle = angle > 360 ? 90 : angle < 0 ? 270 : angle;
     activeObj.rotate(angle).setCoords();
-    canvas.renderAll();
+    canvas.requestRenderAll();
   }
 
   rotateLeftEl.onclick = function() {
