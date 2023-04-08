@@ -137,27 +137,40 @@ function _initDraw(width, height, map) {
     return origHeight;
   }
 
-  $('download').addEventListener('click', saveImage, false);
+  $('download').addEventListener('click', saveCanvasImage, false);
+  $('file-download').addEventListener('click', saveActiveImage, false);
   $('file-name').value = map.name ?? 'stella_canvas';
-  function saveImage(e) {
+  
+  function saveCanvasImage(e) {
+    downloadImage(this, canvas);
+  }
+
+  function saveActiveImage(e) {
+    let target = canvas.getActiveObject();
+    if (target) {
+      downloadImage(this, target);
+    }
+  }
+
+  function downloadImage(link, target) {
     let filename = $('file-name').value.trim() ?? 'stella_canvas';
     const format = $('file-type').value.toLowerCase() ?? 'png';
     if (filename.indexOf('.') < 0) {
       filename = `${filename}.${format}`;
     }
     if (format === "jpeg" || format === "png") {
-      this.href = canvas.toDataURL({
+      link.href = target.toDataURL({
         format: format,
         quality: 0.8
       });  
     } else if (format === "svg") {
-      const data = canvas.toSVG(); 
-      this.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
+      const data = target.toSVG(); 
+      link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
     } else {
-      const data = JSON.stringify(canvas.toJSON());
-      this.href = 'data:application/json,' + encodeURIComponent(data);
+      const data = JSON.stringify(target.toJSON());
+      link.href = 'data:application/json,' + encodeURIComponent(data);
     }
-    this.download = filename;
+    link.download = filename;
   }
 
   const autosaveEl = $('autosave');
@@ -496,20 +509,23 @@ function _initDraw(width, height, map) {
   };
 
   $("fit_canvas").onclick = function() {
-    let activeObj = canvas.getActiveObject();
+    let activeObj = null;
+    if (_mode === "edit") {
+      activeObj = canvas.getActiveObject();
+      setCanvasWidth(origWidth);
+      setCanvasHeight(origHeight);
+    } else {
+      let headerEl = document.getElementById("header");
+      let footerEl = document.getElementById("footer");
+      let adjustHeight = headerEl.offsetHeight + footerEl.offsetHeight;
+      setCanvasWidth(window.innerWidth);
+      setCanvasHeight(window.innerHeight - adjustHeight);
+    }
+
     if (!activeObj) {
-      if (_mode === "edit") {
-        setCanvasWidth(origWidth);
-        setCanvasHeight(origHeight);
-      } else {
-        let headerEl = document.getElementById("header");
-        let footerEl = document.getElementById("footer");
-        let adjustHeight = headerEl.offsetHeight + footerEl.offsetHeight;
-        setCanvasWidth(window.innerWidth);
-        setCanvasHeight(window.innerHeight - adjustHeight);
-      }
       activeObj = selectAll();
     }
+  
     let scaleX = canvas.width / activeObj.width;
     let scaleY = canvas.height / activeObj.height;
     if (scaleX > scaleY) {

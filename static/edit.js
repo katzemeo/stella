@@ -65,7 +65,7 @@ var META = {
     summary: "text",
     id: { type: "text", caption: "Feature ID" },
     sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 32, step: 1 },
-    status: { type: "enum", values: ["backlog", "pending", "inprogress", "complete"], captions: { inprogress: "In Progress" } },
+    status: { type: "enum", values: ["backlog", "pending", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } },
   },
   item: {
     $inherit: "object",
@@ -303,7 +303,7 @@ function initKeyboard() {
   } };
   _vKey.press = pasteCloned;
   _sKey.press = () => { if (_ctrl) {
-    saveToStorage();
+    saveToStorage(true);
   } };
   _deleteKey.press = deleteCurrentObject;
 }

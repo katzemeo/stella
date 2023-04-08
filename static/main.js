@@ -295,7 +295,7 @@ function setMap(map) {
 }
 
 function notifyMapUpdate(event, modified=_modified) {
-  writeMessage(`notify - "${event}" (modified=${modified})`, true);
+  //writeMessage(`notify - "${event}" (modified=${modified})`, true);
   _modified = modified;
   if (modified) {
     _lastModified = new Date();
@@ -309,10 +309,44 @@ function enableDisableNavigation() {
   // Empty
 }
 
+const MAX_SELECTION = 20;
 function searchKey(key) {
   var value = document.getElementById(key).value;
   _filterKey = value;
-  // TODO
+  if (_filterKey && _filterKey.length > 2 && _canvas) {
+    var filterKey = _filterKey && _filterKey.toLowerCase();
+    let objects = _canvas.getObjects();
+    const keys = ['id', 'summary', 'text'];
+    objects = objects.filter(function (row) {
+      return keys.some(function (key) {
+        if (key === 'id') {
+          return String(row[key]).toLowerCase() === filterKey;
+        }
+        return String(row[key]).toLowerCase().indexOf(filterKey) > -1;
+      });
+    });
+
+    _canvas.discardActiveObject();
+    if (objects.length > 0) {
+      let sel = objects[0];
+      let message = null;
+      if (objects.length > 1) {
+        message = `Found ${objects.length} matching objects`;
+        if (objects.length > MAX_SELECTION) {
+          objects = objects.slice(0, MAX_SELECTION);
+          message += ` (selection limited to ${objects.length})`;
+        }
+        sel = new fabric.ActiveSelection(objects, {
+          canvas: _canvas,
+        });
+      } else {
+        message = `Found [${sel.id}] - "${sel.summary}"`;
+      }
+      writeMessage(message);
+      _canvas.setActiveObject(sel);
+    }
+    _canvas.requestRenderAll();
+  }
 }
 
 function processMap(data) {
