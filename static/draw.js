@@ -36,7 +36,7 @@ function _createHexagon() {
   return poly;
 }
 
-function _createItem(id, sp) {
+function _createStar(id, sp) {
   let rect = new fabric.Rect();
   rect.set({
     width: 150, height: 100, fill: '#f55', stroke: "#0CB620", strokeWidth: 2,
@@ -194,7 +194,9 @@ function _initDraw(width, height, map) {
   if (map.canvasData) {
     canvas.loadFromJSON(map.canvasData);
   }
-  $('canvas-background').value = canvas.backgroundColor;
+  if (canvas.backgroundColor) {
+    $('canvas-background').value = canvas.backgroundColor;
+  }
   $('canvas-bg-use').checked = canvas.backgroundColor !== undefined;
   updateDrawingMode();
 
@@ -246,14 +248,14 @@ function _initDraw(width, height, map) {
     }
   });
   canvas.on('mouse:up', function(opt) {
-    // on mouse up we want to recalculate new interaction
-    // for all objects, so we call setViewportTransform
+    // On mouse up recalculate new interaction for all objects
     this.setViewportTransform(this.viewportTransform);
     this.defaultCursor = 'default';
     this.isDragging = false;
     this.selection = _mode === "edit";
 
-    if (_targetURL &&  _mode !== "edit") {
+    // Open URL in view mode (if set)
+    if (_targetURL && _mode !== "edit") {
       window.open(_targetURL, "stella_link");
       _targetURL = null;
     }
@@ -263,11 +265,16 @@ function _initDraw(width, height, map) {
   canvas.on('mouse:over', function(opt) {
     if (opt.target) {
       const obj = opt.target;
-      if (!_targetURL && obj.url) {
-        _targetURL = obj.url;
-        writeMessage(_targetURL);
+      if (!_targetURL) {
+        if (obj.url) {
+          _targetURL = obj.url;
+          writeMessage(_targetURL);
+        } else if (obj.id || obj.summary) {
+          _targetURL = obj.id ? `javascript:alert("Navigate to ${obj.id}")` : null;
+          writeMessage(`${obj.id ?? ""}: "${obj.summary ?? ""}"`);
+        }
       }
-    }    
+    }
   });
 
   canvas.on('mouse:out', function(opt) {
@@ -428,12 +435,12 @@ function _initDraw(width, height, map) {
   };
 
   $("add-code").onclick = function() {
-    canvas.add(_createItem("itemID", 8));
+    canvas.add(_createItem("ITEM-1234", 8));
     notifyMapUpdate("item", true);
   };
 
   $("add-code-block").onclick = function() {
-    canvas.add(_createFeat("featID", 30));
+    canvas.add(_createFeat("FEAT-9999", 30));
     notifyMapUpdate("feat", true);
   };
 
