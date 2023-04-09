@@ -65,6 +65,7 @@ window.onload = function () {
   configureAutomaticSave();
   updateTooltips();
   initKeyboard();
+  updateCanvasSelection();
 };
 
 function updateTooltips() {
@@ -77,7 +78,7 @@ function updateTooltips() {
 var _modified = false;
 var _state = null;
 const saveToStorage = (force=false) => {
-  if (localStorage && _modified && (_autosave || force)) {
+  if (localStorage && ((_modified && _autosave) || force)) {
     //console.log(`saveToStorage() - force=${force}, modified=${_modified}`);
     _state = {};
     _state._maps = _maps;
@@ -309,10 +310,13 @@ function enableDisableNavigation() {
   // Empty
 }
 
-const MAX_SELECTION = 20;
 function searchKey(key) {
-  var value = document.getElementById(key).value;
-  _filterKey = value;
+  _filterKey = document.getElementById(key).value;
+  updateCanvasSelection();
+}
+
+const MAX_SELECTION = 20;
+function updateCanvasSelection() {
   if (_filterKey && _filterKey.length > 2 && _canvas) {
     var filterKey = _filterKey && _filterKey.toLowerCase();
     let objects = _canvas.getObjects();

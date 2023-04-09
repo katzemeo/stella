@@ -92,9 +92,14 @@ fabric.Feat = fabric.util.createClass(fabric.Rect, {
 
     ctx.font = '12px Helvetica';
     ctx.fillStyle = '#000';
-    ctx.fillText(`<${this.id ?? ""}>`, -this.width/2, -this.height/2 + 12);
+    const text = `${this.id ?? ""}`;
+    const startX = -this.width/2 + 3;
+    const startY = -this.height/2 + 12;
+    ctx.fillText(text, startX, startY);
+    var textMeasurement = ctx.measureText(text);
+    ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
     ctx.fillText(`${this.sp ?? 0} SP`, this.width/2 - 36, -this.height/2 + 12);
-    ctx.fillText(`${this.summary}`, -this.width/2, this.height/2 - 8);
+    ctx.fillText(`${this.summary}`, startX, this.height/2 - 4);
     ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
   }
 });

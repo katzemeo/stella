@@ -194,6 +194,8 @@ function _initDraw(width, height, map) {
   if (map.canvasData) {
     canvas.loadFromJSON(map.canvasData);
   }
+  $('canvas-background').value = canvas.backgroundColor;
+  $('canvas-bg-use').checked = canvas.backgroundColor !== undefined;
   updateDrawingMode();
 
   $('canvas-width').onchange = function() {
@@ -203,6 +205,22 @@ function _initDraw(width, height, map) {
   $('canvas-height').onchange = function() {
     notifyMapUpdate("canvas-height", true);
     setCanvasHeight($('canvas-height').valueAsNumber, true);
+  };
+  $('canvas-background').onchange = function() {
+    notifyMapUpdate("canvas-background", true);
+    if ($('canvas-bg-use').checked) {
+      _canvas.backgroundColor = $('canvas-background').value;
+      _canvas.requestRenderAll();
+    }
+  };
+  $('canvas-bg-use').onchange = function() {
+    notifyMapUpdate("canvas-bg-use", true);
+    if ($('canvas-bg-use').checked) {
+      _canvas.backgroundColor = $('canvas-background').value;
+    } else {
+      delete _canvas.backgroundColor;
+    }
+    _canvas.requestRenderAll();
   };
 
   // Pan support
