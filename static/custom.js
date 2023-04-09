@@ -47,6 +47,9 @@ fabric.Feat = fabric.util.createClass(fabric.Rect, {
         if (this.status === "pending") {
           this.fill = "#EBDA24";
           this.stroke = "#B2A515";
+        } else if (this.status === "ready") {
+          this.fill = "#085ADD";
+          this.stroke = "#06168E";
         } else if (this.status === "blocked") {
           const gradient = new fabric.Gradient({
             type: 'radial',
@@ -164,7 +167,7 @@ fabric.Item = fabric.util.createClass(fabric.Rect, {
           this.fill = "#EBDA24";
           this.stroke = "#B2A515";
         } else if (this.status === "ready") {
-          this.fill = "#1437C2";
+          this.fill = "#085ADD";
           this.stroke = "#06168E";
         } else if (this.status === "blocked") {
           const gradient = new fabric.Gradient({

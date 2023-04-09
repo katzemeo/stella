@@ -65,7 +65,7 @@ var META = {
     summary: "text",
     id: { type: "text", caption: "Feature ID" },
     sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 32, step: 1 },
-    status: { type: "enum", values: ["backlog", "pending", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
+    status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
   },
   item: {
     $inherit: "object",

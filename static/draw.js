@@ -1,3 +1,28 @@
+function closePopupMenu() {
+  const menu = document.getElementById("context-menu");
+  menu.style.display = 'none';
+}
+
+function findItemById(itemId) {
+  const objects = _canvas.getObjects();
+  for (let i=0; i<objects.length; i++) {
+    if (objects[i].id === itemId) {
+      return objects[i];
+    }
+  }
+  return null;
+}
+
+function setItemStatus(itemId, itemStatus) {
+  const item = findItemById(itemId);
+  if (item) {
+    item.set({status: itemStatus});
+    notifyMapUpdate("setItemStatus", true);
+    _canvas.requestRenderAll();
+  }
+  closePopupMenu();
+}
+
 function _genPolyPoints(sides, radius) {
   const sweep = Math.PI * 2 / sides;
   const cx = radius;
@@ -60,7 +85,7 @@ function _createStar(id, sp) {
 }
 
 function _initDraw(width, height, map) {
-  var $ = function(id){return document.getElementById(id)};
+  var $ = function(id) { return document.getElementById(id); };
   var show = function(el,v) { el.style.display = v ? "" : "none"; }
 
   var origWidth = width;
@@ -68,6 +93,7 @@ function _initDraw(width, height, map) {
 
   var canvas = new fabric.Canvas('canvas', {
     isDrawingMode: false,
+    fireRightClick: true,
     selection: _mode === "edit",
     defaultCursor: 'default',
     hoverCursor: _mode === "edit" ? 'grab' : 'default',
@@ -135,6 +161,87 @@ function _initDraw(width, height, map) {
       canvas.requestRenderAll();
     }
     return origHeight;
+  }
+
+  fabric.util.addListener(document.getElementsByClassName('upper-canvas')[0], 'contextmenu', function (e) {
+    let target = canvas.findTarget(e, false);
+    let type = null;
+    if (target) {
+      type = target.type;
+    } else {
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+    }
+    e.preventDefault();
+
+    const menu = $("context-menu");
+    if (type === "feat" || type === "item") {
+      buildItemPopupMenu(target, menu);
+      menu.style.display = 'block';
+      menu.style.left = e.pageX+"px";
+      menu.style.top = e.pageY+"px";
+    } else {
+      menu.style.display = 'none';
+    }
+  
+    return false;
+  });
+
+  function buildItemPopupMenu(target, menu) {
+    removeChildren(menu);
+    let mi = document.createElement("span");
+    mi.className = "list-group-item list-group-item-secondary";
+    mi.innerHTML = `<h5 class="mb-1">Status: ${target.id}</h5>`;
+    //mi.innerText = `Status: ${target.id}`;
+    menu.appendChild(mi);
+
+    const meta = META[target.type].status;
+    const value = target.status;
+    meta.values.forEach((v) => {
+      let caption = v;
+      let icon = "";
+      if (meta.captions) {
+        caption = meta.captions[v] ?? toCaptionFromIdentifier(v);
+      }
+
+      let className = "list-group-item list-group-item-action";
+      if (v === "backlog") {
+        icon = "schedule";
+        //className = "list-group-item list-group-item-action list-group-item-dark";
+      } else if (v === "pending") {
+        icon = "pending";
+        //className = "list-group-item list-group-item-action list-group-item-warning";
+      } else if (v === "ready") {
+        icon = "calendar_today";
+        //className = "list-group-item list-group-item-action list-group-item-primary";
+      } else if (v === "blocked") {
+        icon = "block";
+        //className = "list-group-item list-group-item-action list-group-item-danger";
+      } else if (v === "inprogress") {
+        icon = "hourglass_empty";
+        //className = "list-group-item list-group-item-action list-group-item-info";
+      } else if (v === "complete") {
+        icon = "check_circle";
+        //className = "list-group-item list-group-item-action list-group-item-success";
+      } else {
+        console.log(`Unknown status value "${v}"`);
+        //icon = "pending";
+        //className = "list-group-item list-group-item-action list-group-item-light";
+      }
+
+      if (v !== value) {
+        mi = document.createElement("a");
+        mi.className = className;
+        mi.href = "#";
+        mi.setAttribute("onclick", `setItemStatus("${target.id}", "${v}"); return false;`);
+      } else {
+        mi = document.createElement("span");
+        mi.className = "list-group-item active";
+      }
+      mi.innerHTML = `<i class="material-icons">${icon}</i> ${caption}`;
+      //mi.innerText = caption;
+      menu.appendChild(mi);
+    });
   }
 
   $('download').addEventListener('click', saveCanvasImage, false);
@@ -235,6 +342,10 @@ function _initDraw(width, height, map) {
       this.lastPosX = e.clientX;
       this.lastPosY = e.clientY;
     }
+
+    if (opt.button !== 3) {
+      closePopupMenu();
+    }
   });
   canvas.on('mouse:move', function(opt) {
     if (this.isDragging) {
@@ -255,8 +366,12 @@ function _initDraw(width, height, map) {
     this.selection = _mode === "edit";
 
     // Open URL in view mode (if set)
-    if (_targetURL && _mode !== "edit") {
-      window.open(_targetURL, "stella_link");
+    if (opt.button === 1 &&_targetURL && _mode !== "edit") {
+      try {
+        if (Boolean(new URL(_targetURL))) {
+          window.open(_targetURL, "stella_link");
+        }
+      } catch (e) { }
       _targetURL = null;
     }
   });
