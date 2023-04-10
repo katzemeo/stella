@@ -64,14 +64,14 @@ var META = {
     stroke: { type: "color", caption: "Stroke Color" },
     summary: "text",
     id: { type: "text", caption: "Feature ID" },
-    sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 32, step: 1 },
+    sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 40, step: 1 },
     status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
   },
   item: {
     $inherit: "object",
     summary: "text",
     id: { type: "text", caption: "Item ID" },
-    sp: { type: "number", caption: "Story Point (SP)" },
+    sp: { type: "enum", caption: "Story Point (SP)", values: [0, 1, 2, 3, 5, 8] },
     status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
   },
 }

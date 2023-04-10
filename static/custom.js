@@ -103,7 +103,9 @@ fabric.Feat = fabric.util.createClass(fabric.Rect, {
     ctx.fillText(text, startX, startY);
     var textMeasurement = ctx.measureText(text);
     ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
-    ctx.fillText(`${this.sp ?? 0} SP`, this.width/2 - 36, -this.height/2 + 12);
+    if (this.sp >= 0) {
+      ctx.fillText(`${this.sp} SP`, this.width/2 - 36, -this.height/2 + 12);
+    }
     ctx.fillText(`${this.summary}`, startX, this.height/2 - 4);
     ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
   }
@@ -125,6 +127,7 @@ function _createFeat(id, sp, summary = null) {
     ry: 10,
     scaleX: 4,
     scaleY: 4,
+    opacity: 0.9,
     summary: summary ?? "My Feature",
     id: id,
     sp: sp,
@@ -225,7 +228,9 @@ fabric.Item = fabric.util.createClass(fabric.Rect, {
     var textMeasurement = ctx.measureText(text);
     ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
     ctx.font = '32px Helvetica';
-    ctx.fillText(`${this.sp ?? 0} SP`, startX, startY + 40);
+    if (this.sp >= 0) {
+      ctx.fillText(`${this.sp} SP`, startX, startY + 40);
+    }
     //ctx.fillText(`${this.summary}`, startX, this.height/2 - 4);
 
     ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
