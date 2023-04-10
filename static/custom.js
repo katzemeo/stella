@@ -118,15 +118,17 @@ function _createFeat(id, sp, summary = null) {
   const feat = new fabric.Feat({
     left: 50,
     top: 50,
-    width: 150,
-    height: 100,
+    width: 200,
+    height: 150,
     strokeWidth: 2,
     rx: 10,
     ry: 10,
+    scaleX: 4,
+    scaleY: 4,
     summary: summary ?? "My Feature",
     id: id,
     sp: sp,
-    status: "pending"
+    status: "backlog"
   });
   return feat;
 }
@@ -247,7 +249,7 @@ function _createItem(id, sp, summary = null) {
     summary: summary ?? "My Item",
     id: id,
     sp: sp,
-    status: "pending"
+    status: "ready"
   });
   return feat;
 }

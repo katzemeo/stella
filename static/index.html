@@ -80,6 +80,10 @@
   <script src="/public/edit.js"></script>
   <script src="/public/custom.js"></script>
 
+  <!-- Popup menu -->
+  <div class="list-group col-auto" id="context-menu" style="position: absolute; z-index: 2000; display: none;">
+  </div>
+
   <!-- Header -->
   <nav id="header" class="navbar sticky-top navbar-expand navbar-dark bg-dark">
     <div class="container-fluid">
@@ -193,8 +197,6 @@
 
   <div class="container float-left" style="max-width: 100%; background-color: whitesmoke">
     <div class="row">
-      <div class="list-group col-auto" id="context-menu" style="position: absolute; z-index: 10; display: none;">
-      </div>
       <div id="canvas-div" class="col-auto px-0 mr-auto" style="background-color: black; overflow: auto;">
         <canvas class="border border-secondary" id="canvas" />
       </div>

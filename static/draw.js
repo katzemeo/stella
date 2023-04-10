@@ -1,3 +1,9 @@
+var _itemCounter = 1000;
+function _genItemID(prefix) {
+  _itemCounter++;
+  return `${prefix}-${_itemCounter}`;
+}
+
 function closePopupMenu() {
   const menu = document.getElementById("context-menu");
   menu.style.display = 'none';
@@ -54,8 +60,8 @@ function _createHexagon() {
   const poly = new fabric.Polygon(points, {
     left: 50,
     top: 50,
-    fill: '#F06292',
-    stroke: "#880E4F",
+    fill: '#0CB620',
+    stroke: "#01740F",
     strokeWidth: 2
   });
   return poly;
@@ -191,8 +197,7 @@ function _initDraw(width, height, map) {
     removeChildren(menu);
     let mi = document.createElement("span");
     mi.className = "list-group-item list-group-item-secondary";
-    mi.innerHTML = `<h5 class="mb-1">Status: ${target.id}</h5>`;
-    //mi.innerText = `Status: ${target.id}`;
+    mi.innerHTML = `<h5 class="mb-1"><span class="text-decoration-underline">${target.id}</span> Status</h5>`;
     menu.appendChild(mi);
 
     const meta = META[target.type].status;
@@ -239,7 +244,6 @@ function _initDraw(width, height, map) {
         mi.className = "list-group-item active";
       }
       mi.innerHTML = `<i class="material-icons">${icon}</i> ${caption}`;
-      //mi.innerText = caption;
       menu.appendChild(mi);
     });
   }
@@ -366,28 +370,27 @@ function _initDraw(width, height, map) {
     this.selection = _mode === "edit";
 
     // Open URL in view mode (if set)
-    if (opt.button === 1 &&_targetURL && _mode !== "edit") {
-      try {
-        if (Boolean(new URL(_targetURL))) {
-          window.open(_targetURL, "stella_link");
-        }
-      } catch (e) { }
-      _targetURL = null;
+    if (opt.button === 1 && _mode !== "edit") {
+      if (_targetURL) {
+        try {
+          if (Boolean(new URL(_targetURL))) {
+            window.open(_targetURL, "stella_link");
+          }
+        } catch (e) { }
+        _targetURL = null;
+      }
     }
   });
 
   let _targetURL = null;
   canvas.on('mouse:over', function(opt) {
-    if (opt.target) {
+    if (opt.target && !_targetURL) {
       const obj = opt.target;
-      if (!_targetURL) {
-        if (obj.url) {
-          _targetURL = obj.url;
-          writeMessage(_targetURL);
-        } else if (obj.id || obj.summary) {
-          _targetURL = obj.id ? `javascript:alert("Navigate to ${obj.id}")` : null;
-          writeMessage(`${obj.id ?? ""}: "${obj.summary ?? ""}"`);
-        }
+      if (obj.url) {
+        _targetURL = obj.url;
+        writeMessage(_targetURL);
+      }  else if (obj.id || obj.summary) {
+        writeMessage(`${obj.id ?? ""} [${obj.status ?? "Unknown"}] - "${obj.summary ?? ""}"`);
       }
     }
   });
@@ -499,7 +502,7 @@ function _initDraw(width, height, map) {
 
   $("add-circle").onclick = function() {
     var circle = new fabric.Circle({
-      left: 125, top: 75, radius: 75, fill: '#00ff00', stroke: "#0CB620", strokeWidth: 2, padding: 0
+      left: 125, top: 75, radius: 75, fill: "#EBDA24", stroke: "#B2A515", strokeWidth: 2, padding: 0
     });
     canvas.add(circle);
     notifyMapUpdate("circle", true);
@@ -507,7 +510,7 @@ function _initDraw(width, height, map) {
 
   $("add-triangle").onclick = function() {
     var triangle = new fabric.Triangle({
-      left: 50, top: 150, width: 150, height: 150, fill: '#00ff00', stroke: "#0CB620", strokeWidth: 2, padding: 0
+      left: 50, top: 150, width: 150, height: 150, fill: "#085ADD", stroke: "#06168E", strokeWidth: 2, padding: 0
     });
     canvas.add(triangle);
     notifyMapUpdate("triangle", true);
@@ -516,7 +519,7 @@ function _initDraw(width, height, map) {
   $("add-rect").onclick = function() {
     var rect = new fabric.Rect();
     rect.set({
-      left: 10, top: 10, width: 150, height: 100, fill: '#f55', stroke: "#0CB620", strokeWidth: 2, opacity: 0.7, padding: 0
+      left: 10, top: 10, width: 150, height: 100, fill: "#C16767", stroke: "#BF4040", strokeWidth: 2, opacity: 0.7, padding: 0
     });
     canvas.add(rect);
     notifyMapUpdate("rect", true);
@@ -550,12 +553,12 @@ function _initDraw(width, height, map) {
   };
 
   $("add-code").onclick = function() {
-    canvas.add(_createItem("ITEM-1234", 8));
+    canvas.add(_createItem(_genItemID("ITEM"), 8));
     notifyMapUpdate("item", true);
   };
 
   $("add-code-block").onclick = function() {
-    canvas.add(_createFeat("FEAT-9999", 30));
+    canvas.add(_createFeat(_genItemID("FEAT"), 30));
     notifyMapUpdate("feat", true);
   };
 

@@ -94,6 +94,7 @@ const saveToStorage = (force=false) => {
     }
     _state.autosave = _autosave;
     _state.lastModified = _lastModified;
+    _state._itemCounter = _itemCounter;
     localStorage.setItem("katzemeo.stella", JSON.stringify(_state));
     notifyMapUpdate("saveToStorage", false);
     writeMessage("Saved to local storage (Updated: "+ formatTime(_state.lastModified) +")");
@@ -116,6 +117,9 @@ const restoreFromStorage = () => {
         _canvasSize = _state.canvasSize;
         _autosave = _state.autosave;
         _lastModified = _state.lastModified;
+        if (_state._itemCounter) {
+          _itemCounter = _state._itemCounter;
+        }
         writeMessage("Restored from local storage (Updated: "+ formatTime(_state.lastModified) +")");
         notifyMapUpdate("restoreFromStorage", false);
         return true;
@@ -331,9 +335,9 @@ function updateCanvasSelection() {
     });
 
     _canvas.discardActiveObject();
+    let message = "";
     if (objects.length > 0) {
       let sel = objects[0];
-      let message = null;
       if (objects.length > 1) {
         message = `Found ${objects.length} matching objects`;
         if (objects.length > MAX_SELECTION) {
@@ -346,9 +350,9 @@ function updateCanvasSelection() {
       } else {
         message = `Found [${sel.id}] - "${sel.summary}"`;
       }
-      writeMessage(message);
       _canvas.setActiveObject(sel);
     }
+    writeMessage(message);
     _canvas.requestRenderAll();
   }
 }
