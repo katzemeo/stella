@@ -91,6 +91,7 @@ function _createStar(id, sp) {
 }
 
 function _initDraw(width, height, map) {
+  //console.log(`_initDraw() - ${width}, ${height}, ${map})`);
   var $ = function(id) { return document.getElementById(id); };
   var show = function(el,v) { el.style.display = v ? "" : "none"; }
 
@@ -248,10 +249,10 @@ function _initDraw(width, height, map) {
     });
   }
 
-  $('download').addEventListener('click', saveCanvasImage, false);
-  $('file-download').addEventListener('click', saveActiveImage, false);
+  $('download').onclick = saveCanvasImage;
+  $('file-download').onclick = saveActiveImage;
   $('file-name').value = map.name ?? 'stella_canvas';
-  
+
   function saveCanvasImage(e) {
     downloadImage(this, canvas);
   }
@@ -260,6 +261,8 @@ function _initDraw(width, height, map) {
     let target = canvas.getActiveObject();
     if (target) {
       downloadImage(this, target);
+    } else {
+      alert("Please select object(s) to save!");
     }
   }
 
@@ -368,6 +371,8 @@ function _initDraw(width, height, map) {
     this.defaultCursor = 'default';
     this.isDragging = false;
     this.selection = _mode === "edit";
+    _originalTransformMove = null;
+    _originalTransformScale = null;
 
     // Open URL in view mode (if set)
     if (opt.button === 1 && _mode !== "edit") {
@@ -405,9 +410,25 @@ function _initDraw(width, height, map) {
   canvas.upperCanvasEl.onmouseenter = enableKeyboard;
   canvas.upperCanvasEl.onmouseleave = disableKeyboard;
 
+  // Cancel "transform" support (with ESC key)
+  canvas.on('object:moving', function(opt) {
+    if (!_originalTransformMove) {
+      _originalTransformMove = opt.transform.original;
+      //console.log("moving", _originalTransformMove);
+    }
+    //writeMessage(`left: ${toFixed(opt.target.left)}, top: ${toFixed(opt.target.top)}`)
+  });
+  canvas.on('object:scaling', function(opt) {
+    if (!_originalTransformScale) {
+      _originalTransformScale = opt.transform.original;
+      //console.log("scaling", _originalTransformScale);
+    }
+    //writeMessage(`scale-x: ${toFixed(opt.target.scaleX)}, scale-y: ${toFixed(opt.target.scaleY)}`)
+  });
+
   // Zoom support
   function fixZoom(zoom) {
-    zoom = Number(zoom.toFixed(2));
+    zoom = toFixed(zoom);
     if (zoom > 5) zoom = 5;
     else if (zoom < 0.1) zoom = 0.1;
     else if (isNaN(zoom)) zoom = 1;
@@ -750,7 +771,7 @@ function _initDraw(width, height, map) {
     canvas.requestRenderAll();
   };
 
-  deleteEl.onclick = deleteCurrentObject
+  deleteEl.onclick = deleteActiveObject
   clearEl.onclick = function() {
     if (_mode === "edit") {
       canvas.clear();

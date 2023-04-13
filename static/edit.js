@@ -65,14 +65,14 @@ var META = {
     summary: "text",
     id: { type: "text", caption: "Feature ID" },
     sp: { type: "number", caption: "Estimate (SP)", min: 0, max: 40, step: 1 },
-    status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
+    status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "completed"], captions: { inprogress: "In Progress" } }
   },
   item: {
     $inherit: "object",
     summary: "text",
     id: { type: "text", caption: "Item ID" },
     sp: { type: "enum", caption: "Story Point (SP)", values: [0, 1, 2, 3, 5, 8] },
-    status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "complete"], captions: { inprogress: "In Progress" } }
+    status: { type: "enum", values: ["backlog", "pending", "ready", "blocked", "inprogress", "completed"], captions: { inprogress: "In Progress" } }
   },
 }
 
@@ -125,7 +125,7 @@ function handlePropertyChange(name, type) {
   }
 }
 
-function deleteCurrentObject() {
+function deleteActiveObject() {
   const activeObj = _canvas.getActiveObject();
   if (!activeObj) {
     return;
@@ -138,7 +138,30 @@ function deleteCurrentObject() {
   } else {
     _canvas.remove(activeObj);
   }
-  notifyMapUpdate("deleteCurrentObject", true);
+  notifyMapUpdate("deleteActiveObject", true);
+}
+
+var _originalTransformMove = null;
+var _originalTransformScale = null;
+function cancelActiveObject() {
+  const activeObj = _canvas.getActiveObject();
+  if (!activeObj || (!_originalTransformMove && !_originalTransformScale)) {
+    return;
+  }
+
+  if (_originalTransformScale) {
+    activeObj.set(_originalTransformScale);
+  } else if (_originalTransformMove) {
+    activeObj.set(_originalTransformMove);
+  }
+
+  _canvas.discardActiveObject();
+  _canvas.defaultCursor = 'default';
+  _canvas.selection = false;  
+  _canvas.requestRenderAll();
+  _originalTransform = null;
+
+  notifyMapUpdate("cancelActiveObject", true);
 }
 
 const MAX_FRAC_DIGITS = 2;
@@ -294,7 +317,7 @@ function createSelect(name, meta, value, onChange) {
 var _ctrl = false;
 var _clipboard = null;
 var _cKey = keyboard("c"), _vKey = keyboard("v"), _sKey = keyboard("s"),
-  _deleteKey = keyboard("Delete"), _ctrlKey = keyboard("Control");
+  _deleteKey = keyboard("Delete"), _ctrlKey = keyboard("Control"), _escKey = keyboard("Escape");
 var _keyboardEnabled = false;
 
 function initKeyboard() {
@@ -307,7 +330,8 @@ function initKeyboard() {
   _sKey.press = () => { if (_ctrl) {
     saveToStorage(true);
   } };
-  _deleteKey.press = deleteCurrentObject;
+  _deleteKey.press = deleteActiveObject;
+  _escKey.press = cancelActiveObject;
 }
 
 function enableKeyboard() {
@@ -323,6 +347,7 @@ function enableKeyboard() {
   _sKey.subscribe();
   _ctrlKey.subscribe();
   _deleteKey.subscribe();
+  _escKey.subscribe();
 }
 
 function disableKeyboard() {
@@ -336,6 +361,7 @@ function disableKeyboard() {
   _sKey.unsubscribe();
   _ctrlKey.unsubscribe();
   _deleteKey.unsubscribe();
+  _escKey.unsubscribe();
 
   _keyboardEnabled = false;
 }
