@@ -117,6 +117,7 @@ function _initDraw(width, height, map) {
   fabric.Object.prototype.transparentCorners = false;
   const canvasDivEl = $('canvas-div'),
     editModeEl = $('edit-mode'),
+    viewModeEl = $('view-mode'),
     undoEl = $('undo'),
     redoEl = $('redo'),
     optionsEl = $('options'),
@@ -226,7 +227,7 @@ function _initDraw(width, height, map) {
       } else if (v === "inprogress") {
         icon = "hourglass_empty";
         //className = "list-group-item list-group-item-action list-group-item-info";
-      } else if (v === "complete") {
+      } else if (v === "completed" || v === "complete") {
         icon = "check_circle";
         //className = "list-group-item list-group-item-action list-group-item-success";
       } else {
@@ -276,9 +277,9 @@ function _initDraw(width, height, map) {
       link.href = target.toDataURL({
         format: format,
         quality: 0.8
-      });  
+      });
     } else if (format === "svg") {
-      const data = target.toSVG(); 
+      const data = target.toSVG();
       link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
     } else {
       const data = JSON.stringify(target.toJSON());
@@ -297,6 +298,7 @@ function _initDraw(width, height, map) {
   fabric.Image.prototype.hoverCursor = "pointer";
   updatePropertiesMode();
   show(editModeEl, _mode !== "edit");
+  show(viewModeEl, _mode !== "view");
   uiElements.forEach((el) => {
     show(el, _mode === "edit");
   });
@@ -312,7 +314,6 @@ function _initDraw(width, height, map) {
     $('canvas-background').value = canvas.backgroundColor;
   }
   $('canvas-bg-use').checked = canvas.backgroundColor !== undefined;
-  updateDrawingMode();
 
   $('canvas-width').onchange = function() {
     notifyMapUpdate("canvas-width", true);
@@ -342,7 +343,7 @@ function _initDraw(width, height, map) {
   // Pan support
   canvas.on('mouse:down', function(opt) {
     const e = opt.e;
-    if (e.altKey || _mode !== "edit") {
+    if (opt.button === 1 && (e.altKey || _mode !== "edit")) {
       this.defaultCursor = 'grab';
       this.isDragging = true;
       this.selection = false;
@@ -355,7 +356,7 @@ function _initDraw(width, height, map) {
     }
   });
   canvas.on('mouse:move', function(opt) {
-    if (this.isDragging) {
+    if (opt.button === 1 && this.isDragging) {
       const e = opt.e;
       var vpt = this.viewportTransform;
       vpt[4] += e.clientX - this.lastPosX;
@@ -395,7 +396,8 @@ function _initDraw(width, height, map) {
         _targetURL = obj.url;
         writeMessage(_targetURL);
       }  else if (obj.id || obj.summary) {
-        writeMessage(`${obj.id ?? ""} [${obj.status ?? "Unknown"}] - "${obj.summary ?? ""}"`);
+        let assigneeText = "";
+        writeMessage(`${obj.id ?? ""} [${obj.status ? obj.status.toUpperCase() : "Unknown"}] - "${obj.summary ?? ""}"${assigneeText}`);
       }
     }
   });
@@ -672,7 +674,7 @@ function _initDraw(width, height, map) {
     rotateObject(90);
   };
 
-  $("fit_canvas").onclick = function() {
+  function fitToCanvas() {
     let activeObj = null;
     if (_mode === "edit") {
       activeObj = canvas.getActiveObject();
@@ -705,7 +707,8 @@ function _initDraw(width, height, map) {
     canvas.discardActiveObject();
     canvas.requestRenderAll();
     updateZoomValues();
-  };
+  }
+  $("fit_canvas").onclick = fitToCanvas;
 
   const centerEl = $("center");
   centerEl.onclick = function() {
@@ -788,15 +791,16 @@ function _initDraw(width, height, map) {
       drawingModeEl.classList.remove("btn-success");
       drawingModeEl.classList.add("btn-warning");
       show(drawingOptionsEl, false);
-      writeMode("Select");
+      writeMode(_mode === "edit" ? "Select" : "View");
     }
   }
   drawingModeEl.onclick = function() {
     if (_mode === "edit") {
       canvas.isDrawingMode = !canvas.isDrawingMode;
-      updateDrawingMode();  
+      updateDrawingMode();
     }
   };
+  updateDrawingMode();
 
   shapeModeEl.onclick = function() {
     if (!shapeOptionsEl.style.display) {

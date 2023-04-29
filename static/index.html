@@ -72,7 +72,7 @@
   <title id="title">Stella v0.3</title>
 </head>
 
-<body oncontextmenu="return false;" style="padding-bottom: 55px; background-color: whitesmoke">
+<body oncontextmenu="return false;">
   <script src="/public/fabric.min.js"></script>
   <script src="/public/bootstrap.bundle.min.js"></script>
   <script src="/public/main.js"></script>
@@ -125,6 +125,10 @@
           <button id="edit-mode" class="btn btn-light mx-1 px-0" onclick="editMode()"
             title="Edit Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">edit</i>
+          </button>
+          <button id="view-mode" class="btn btn-light mx-1 px-0" style="display: none;" onclick="viewMode()"
+            title="View Mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <i class="material-icons">explore</i>
           </button>
           <button id="undo" class="btn btn-light mx-1 px-0 disabled" style="display: none;" title="Undo" data-bs-toggle="tooltip" data-bs-placement="bottom">
             <i class="material-icons">undo</i>
@@ -186,6 +190,7 @@
             <i class="material-icons row">clear_all</i>
           </button>
         </div>
+
         <div class="d-flex">
           <span class="nav-item"><i class="material-icons navitem">search</i></span>
           <input class="form-control me-2" maxlength="20" type="search" placeholder="Search" aria-label="Search" id="global_search"
@@ -200,7 +205,7 @@
       <div id="canvas-div" class="col-auto px-0 mr-auto" style="background-color: black; overflow: auto;">
         <canvas class="border border-secondary" id="canvas" />
       </div>
-      <div id="options" class="col p-0" style="overflow: auto; display: none;">
+      <div id="options" class="col p-0" style="overflow: auto; display: none; margin-bottom: 44px;">
         <div id="drawing-mode-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
           <label for="drawing-mode-selector" style="width: 150px; float: left;">Draw Tool:</label>
           <select id="drawing-mode-selector" title="Drawing Mode" data-bs-toggle="tooltip">
@@ -325,7 +330,6 @@
           <input id="zoom-level" value="1" min="0.1" max="5" step="0.1" type="number" maxlength="5" title="Zoom Level" data-bs-toggle="tooltip">
           <input id="zoom-level-range" value="1" min="0.1" max="5" step="0.1" type="range">
         </div>
-
         <div id="size-options" style="background-color: lightgrey; padding: 4px; margin-bottom: 5px;">
           <label>Size:</label>
           <input id="canvas-width" value="1024" maxlength="4" min="16" max="2048" type="number" title="Canvas Width" data-bs-toggle="tooltip">

@@ -1,5 +1,5 @@
 import env from "../utils/env.ts";
-import { join } from "https://deno.land/std@0.179.0/path/mod.ts";
+import { join } from "../deps.ts";
 
 async function readMapFile(fileName: string) {  
   try {
@@ -12,9 +12,12 @@ async function readMapFile(fileName: string) {
 }
 
 async function getMap(mapName: string) {
-  let data: any = null;
-  // TODO
-  return data;
+  let json: any = null;
+  if (env.BASE_DIR) {
+    const fileName = `${mapName}.map`;
+    json = await readMapFile(join(env.BASE_DIR, fileName));
+  }
+  return json;
 }
 
 export default async (

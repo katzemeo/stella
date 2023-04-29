@@ -66,12 +66,16 @@ window.onload = function () {
   updateTooltips();
   initKeyboard();
   updateCanvasSelection();
+
+  window.addEventListener('resize', () => {
+    //fitToCanvas();
+  });
 };
 
 function updateTooltips() {
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
+    return new bootstrap.Tooltip(tooltipTriggerEl, { trigger : 'hover' });
   });
 }
 
@@ -218,7 +222,9 @@ function refreshMap(map = _map) {
     }
   };
 
-  setMap(map);
+  if (map !== _map) {
+    setMap(map);
+  }
 }
 
 function createMapMI(el, name, removeOption = true) {
@@ -575,5 +581,11 @@ function copyMap() {
 function editMode() {
   const url = new URL(window.location.href);
   url.searchParams.set('mode', 'edit');
+  window.location.assign(url.search);
+}
+
+function viewMode() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'view');
   window.location.assign(url.search);
 }

@@ -23,13 +23,16 @@ fabric.Feat = fabric.util.createClass(fabric.Rect, {
     this.set('id', options.id || '');
     this.set('sp', options.sp || NaN);
     this.set('status', options.status || 'pending');
+    this.set('borderColor', 'green');
+    this.set('borderScaleFactor', 2);
+    this.set('borderDashArray', [4, 4]);
   },
 
   toObject: function() {
     return fabric.util.object.extend(this.callSuper('toObject'), {
       summary: this.get('summary'),
       id: this.get('id'),
-      sp: this.get('sp'),
+      sp: Number(this.get('sp')),
       status: this.get('status')
     });
   },
@@ -83,31 +86,54 @@ fabric.Feat = fabric.util.createClass(fabric.Rect, {
           });
           this.fill = gradient;
           this.stroke = "#01740F";
-        } else {
-          this.fill = "#0CB620";
+        } else if (this.status === "completed" || this.status === "complete") {
+          this.status = "completed"; // migrate (if needed)
+          this.fill = "#00873E";
           this.stroke = "#01740F";
+        } else {
+          this.fill = "#9A9790";
+          this.stroke = "#000000";
         }
       }
     }
   },
 
   _render: function(ctx) {
-    const size = 24;
+    const size = 18;
     this.callSuper('_render', ctx);
 
-    ctx.font = '12px Helvetica';
+    ctx.font = '10px Helvetica';
     ctx.fillStyle = '#000';
-    const text = `${this.id ?? ""}`;
+    const featId = `${this.id ?? ""}`;
+    const text = `${featId}: ${this.estimate ? this.estimate + "SP" : ""}`;
     const startX = -this.width/2 + 3;
     const startY = -this.height/2 + 12;
     ctx.fillText(text, startX, startY);
-    var textMeasurement = ctx.measureText(text);
+    const textMeasurement = ctx.measureText(featId);
     ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
     if (this.sp >= 0) {
-      ctx.fillText(`${this.sp} SP`, this.width/2 - 36, -this.height/2 + 12);
+      ctx.font = 'bold 12px Courier';
+      ctx.fillText(`${this.sp.toString().padStart(3,' ')} SP`, this.width/2 - 48, -this.height/2 + 12);
     }
-    ctx.fillText(`${this.summary}`, startX, this.height/2 - 4);
-    ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
+    ctx.font = '8px Helvetica';
+    ctx.fillText(`${this.summary}`, startX, this.height/2 - 4, this.width - size - 2);
+    if (_img_status[this.status]) {
+      ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
+    } else {
+      console.log(`Unknown status "${this.status}" in Feat._render(${this.id})`);
+    }
+
+    /*if (this.item && this.item.delta) {
+      const delta = this.item.delta;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      if (delta === "new") {
+        ctx.drawImage(_img_add, this.width/2-size, -this.height/2 + size - 7, size, size);
+      } else if (delta === "updated") {
+        ctx.drawImage(_img_asterisk, this.width/2-size, -this.height/2 + size - 7, size, size);
+      }
+      ctx.restore();
+    }*/
   }
 });
 
@@ -121,7 +147,7 @@ function _createFeat(id, sp, summary = null) {
     left: 50,
     top: 50,
     width: 200,
-    height: 150,
+    height: 110,
     strokeWidth: 2,
     rx: 10,
     ry: 10,
@@ -147,13 +173,16 @@ fabric.Item = fabric.util.createClass(fabric.Rect, {
     this.set('id', options.id || '');
     this.set('sp', options.sp || NaN);
     this.set('status', options.status || 'pending');
+    this.set('borderColor', 'green');
+    this.set('borderScaleFactor', 2);
+    this.set('borderDashArray', [4, 4]);
   },
 
   toObject: function() {
     return fabric.util.object.extend(this.callSuper('toObject'), {
       summary: this.get('summary'),
       id: this.get('id'),
-      sp: this.get('sp'),
+      sp: Number(this.get('sp')),
       status: this.get('status')
     });
   },
@@ -207,9 +236,13 @@ fabric.Item = fabric.util.createClass(fabric.Rect, {
           });
           this.fill = gradient;
           this.stroke = "#01740F";
-        } else {
+        } else if (this.status === "completed" || this.status === "complete") {
+          this.status = "completed"; // migrate (if needed)
           this.fill = "#0CB620";
           this.stroke = "#01740F";
+        } else {
+          this.fill = "#9A9790";
+          this.stroke = "#000000";
         }
       }
     }
@@ -225,15 +258,30 @@ fabric.Item = fabric.util.createClass(fabric.Rect, {
     const startX = -this.width/2 + 3;
     const startY = -12;
     ctx.fillText(text, startX, startY);
-    var textMeasurement = ctx.measureText(text);
-    ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
+    //const textMeasurement = ctx.measureText(text);
+    //ctx.fillRect(startX, startY + 1, textMeasurement.width, 1);
     ctx.font = '32px Helvetica';
     if (this.sp >= 0) {
       ctx.fillText(`${this.sp} SP`, startX, startY + 40);
     }
     //ctx.fillText(`${this.summary}`, startX, this.height/2 - 4);
+    if (_img_status[this.status]) {
+      ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
+    } else {
+      console.log(`Unknown status "${this.status}" in Item._render(${this.id})`);
+    }
 
-    ctx.drawImage(_img_status[this.status], this.width/2-size, this.height/2 - size, size, size);
+    /*if (this.item && this.item.delta) {
+      const delta = this.item.delta;
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      if (delta === "new") {
+        ctx.drawImage(_img_add, this.width/2-size, -this.height/2, size, size);
+      } else if (delta === "updated") {
+        ctx.drawImage(_img_asterisk, this.width/2-size, -this.height/2, size, size);
+      }
+      ctx.restore();  
+    }*/
   }
 });
 
