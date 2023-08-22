@@ -185,6 +185,7 @@ function appendItem(parentEl, innerHTML, className = null) {
 }
 
 function initCanvas(map, canvasSize=null) {
+  console.log(`initCanvas() - canvasSize=`, canvasSize);
   if (_canvas) {
     if (!canvasSize) {
       canvasSize = { width: _canvas.getWidth(), height: _canvas.getHeight() };
@@ -373,6 +374,7 @@ function processMap(data) {
 
   map.name = map.name ?? MY_MAP;
   map.canvasData = data.canvasData ?? map.canvasData;
+  map.mapData = data.mapData ?? map.mapData;
   initCanvas(map);
 
   if (!_maps[map.name]) {
@@ -383,6 +385,10 @@ function processMap(data) {
 
   refreshMap(map);
 
+  if (map.mapData) {
+    renderCanvasFromMap(_canvas, map);
+  }
+ 
   return map;
 }
 

@@ -1,14 +1,21 @@
+import { parseYAML } from "../deps.ts";
+
 const MAX_MAP_FILE_SIZE = 500 * 1024;
 const ERR_UPLOAD_FILE_SIZE = "Unable to upload.  Please check the file size.";
 const ERR_UPLOAD_FILE_CONTENTS = "Unable to parse map file.  Please check file contents.";
 const ERR_UPLOAD_UNEXPECTED = "Unable to upload due to unexpected error.";
-const ERR_UPLOAD_JSON_EXPECTED = "Invalid file type, JSON file expected.";
+const ERR_UPLOAD_FILE_TYPE = "Invalid file type, JSON or YAML file expected.";
 
-async function parseMapFile(uploadFilename: string, text: string) {
+async function parseMapFile(uploadFilename: string, text: string, contentType: string) {
   try {
     const result : any = {};
-    console.debug(`Validating uploaded JSON file ${uploadFilename}...`);
-    result.canvasData = JSON.parse(text);
+    console.debug(`Validating uploaded map file ${uploadFilename}...`);
+    if (contentType.endsWith("json")) {
+      result.canvasData = JSON.parse(text);
+    } else {
+      result.mapData = parseYAML(text);
+      console.log(result.mapData);
+    }
     result.name = uploadFilename;
     result.date = new Date();
     return result;
@@ -40,16 +47,14 @@ export default async (
     return;
   }
 
-  if (
-    data.files &&
-    (data.files[0].contentType == "application/json")
-  ) {
+  const contentType: any = data.files[0].contentType;
+  if (contentType === "application/json" || contentType === "application/yaml" || contentType === "application/octet-stream") {
     let uploadFilename = data.files[0].originalName;
     console.debug(`Uploading file "${uploadFilename}"`);
     let json;
     if (data.files[0].content) {
       try {
-        json = await parseMapFile(uploadFilename, new TextDecoder().decode(data.files[0].content));
+        json = await parseMapFile(uploadFilename, new TextDecoder().decode(data.files[0].content), contentType);
         response.body = json;
       } catch (e) {
         console.error(e);
@@ -60,7 +65,7 @@ export default async (
       try {
         const stat = await Deno.stat(data.files[0].filename);
         if (stat.size <= MAX_MAP_FILE_SIZE) {
-          json = await parseMapFile(uploadFilename, await Deno.readTextFile(data.files[0].filename));
+          json = await parseMapFile(uploadFilename, await Deno.readTextFile(data.files[0].filename), contentType);
           response.body = json;
         } else {
           response.status = 413;
@@ -75,7 +80,8 @@ export default async (
       }
     }
   } else {
+    console.log(data.files[0].contentType);
     response.status = 415;
-    response.body = { msg: ERR_UPLOAD_JSON_EXPECTED };
+    response.body = { msg: ERR_UPLOAD_FILE_TYPE };
   }
 };

@@ -1,0 +1,53 @@
+class: cloud
+
+clusters:
+  - name: dev01
+    type: cluster
+    profile: 16x32
+    workers: 10
+    infra: 3
+    master: 3
+    nodes:
+      - name: worker1
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: down
+
+  - name: qat01
+    type: cluster
+    profile: 16x64
+    workers: 8
+    infra: 3
+    master: 3
+    nodes:
+      - name: worker1
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: active
+
+  - name: uat01
+    type: cluster
+    profile: 32x64
+    workers: 8
+    infra: 3
+    master: 3
+    nodes:
+      - name: worker1
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: active
+      - name: worker2
+        type: worker
+        status: active

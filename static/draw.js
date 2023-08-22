@@ -307,9 +307,9 @@ function _initDraw(width, height, map) {
   $('canvas-width').valueAsNumber = width;
   setCanvasHeight(height);
   $('canvas-height').valueAsNumber = height;
-  if (map.canvasData) {
-    canvas.loadFromJSON(map.canvasData);
-  }
+
+  renderMap(canvas, map);
+
   if (canvas.backgroundColor) {
     $('canvas-background').value = canvas.backgroundColor;
   }
